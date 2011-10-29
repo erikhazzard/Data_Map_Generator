@@ -40,7 +40,8 @@ MAP_GEN.functions.generate_map = function( map_data ){
             .attr("transform", "translate(-.5,-.5)");
 
     //Store reference to cells 
-    MAP_GEN.cells = {};
+    MAP_GEN.treemap_cells = []; 
+
     var cell = svg.data([MAP_GEN._data]).selectAll("g")
         .data(treemap)
         .enter().append("svg:g")
@@ -54,27 +55,33 @@ MAP_GEN.functions.generate_map = function( map_data ){
         .attr('', function(d){
             //TODO: Do this the right way....
             if(d.children && d.parent !== undefined){
-                MAP_GEN.cells[d.data.name] = d;
+                MAP_GEN.treemap_cells.push(d);
             }
         });
 
-/*
     //-----------------------------------
     //
     //Create force chart to lay out continents
     //
     //-----------------------------------
+    //Create nodes for continents
     var nodes = d3.range(num_continents).map(function(i) {
+        //Store reference to current cell
+        var cur_cell = MAP_GEN.treemap_cells[i];
+
         return {
             //type: Math.random() * num_continents | 0,
             radius: 5,
             fixed:true,
+            //Type is from 0 to n, where n is the number of
+            //  continents
             type:i,
-            x: Math.random() * w,
-            y: Math.random() * h
+            x: (cur_cell.x + (cur_cell.dx / 2)),
+            y: (cur_cell.y + (cur_cell.dy / 2))
         };
-        });
+    });
 
+    //Setup force
     var force = d3.layout.force()
         .gravity(0)
         .charge(0)
@@ -211,5 +218,4 @@ MAP_GEN.functions.generate_map = function( map_data ){
       };
     }
 
-*/
 }
