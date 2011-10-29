@@ -42,6 +42,10 @@ MAP_GEN = {
         generate_map: function(map_data){
             //This function does all the heavy duty of generating the map
             //  defined in generate_map.js
+        },
+        console_log: function(message){
+            //Logs a message to the console div
+            $('#footer #console').html(message);
         }
     }
 };

@@ -229,12 +229,12 @@ text {
     -moz-box-shadow: @light_box_shadow;
     -webkit-box-shadow: @light_box_shadow;
     border: 1px solid #ABABAB;
-    bottom:5%;
+    bottom: @footer_height + 20px;
     display:block;
     left:5%;
     position:absolute;
     right:5%;
-    top: @header_height + 25px;
+    top: @header_height + 20px;
     z-index:999;
 }
     #map_container{
@@ -247,6 +247,7 @@ text {
         right:0;
         top:0;
     }
+    /*Map styles*/
     #map { 
         background: @inner_content_background_color;
         border:1px solid #bcbcbc;
@@ -261,6 +262,60 @@ text {
     #treemap_hidden {
         display: none;
     }
+
+/* ========================================================================    
+ * Footer
+ * ======================================================================== */
+#footer_wrapper {
+    -moz-box-shadow: 0 -2px 7px #707070;
+    -webkit-box-shadow: 0 -2px 7px #707070;
+    box-shadow: 0 -2px 7px #707070;
+    background:#707070 url(../img/footer_bg.jpg);
+    border-top:1px solid #404040;
+    color:#c0c0c0;
+    bottom:0;
+    height:@footer_height;
+    left:0;
+    position:absolute;
+    right:0;
+    text-shadow: 0 0 1px @color_black;
+    z-index:800;
+}
+    #footer {
+        border-top:1px solid #808080;
+        bottom:0;
+        font-size:.8em;
+        left:0;
+        overflow: hidden;
+        padding:4px @inner_padding_width 0;
+        position:absolute;
+        right:0;
+        text-align: right;
+        top:0;
+    }
+        #footer #console {
+            background: @color_black;
+            border: 1px solid #909090;
+            bottom:4px;
+            font-family: 'Ubuntu Mono','Monaco',sans-serif;
+            font-size:.8em;
+            left:2%;
+            padding:2px;
+            position:absolute;
+            right:350px;
+            text-align:center;
+            top:4px;
+        }
+        #footer a {
+            margin:0 1em 0 2em;
+        }
+        #footer a:hover {
+            text-shadow: 0 0 1px #000000 !important;
+        }
+        #footer .email {
+            unicode-bidi: bidi-override;
+            direction: rtl;
+        }
 
 /* ========================================================================    
  *

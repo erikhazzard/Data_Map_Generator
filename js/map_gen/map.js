@@ -15,6 +15,7 @@ MAP_GEN.functions.generate_map = function( map_data ){
 
     //Empty the map div each time this function gets called
     $('#map').empty();
+
     var h = $('#map')[0].offsetHeight;
     var w = $('#map')[0].offsetWidth;
 
@@ -25,6 +26,8 @@ MAP_GEN.functions.generate_map = function( map_data ){
     var num_continents = MAP_GEN._data.children.length;
     var color = d3.scale.category10();
 
+    //Show a status update
+    MAP_GEN.functions.console_log('Creating treemap');
     //-----------------------------------
     //Get Treemap of data so we know starting positions for continents
     //-----------------------------------
@@ -64,6 +67,8 @@ MAP_GEN.functions.generate_map = function( map_data ){
     //Create force chart to lay out continents
     //
     //-----------------------------------
+    //Show a status update
+    MAP_GEN.functions.console_log('Creating force chart');
     //Create nodes for continents
     var nodes = d3.range(num_continents).map(function(i) {
         //Store reference to current cell
@@ -155,9 +160,11 @@ MAP_GEN.functions.generate_map = function( map_data ){
             for(country in MAP_GEN._data.children[continent].children){
                 if(MAP_GEN._data.children[continent].children.hasOwnProperty(
                     country)){
-                    //Create some random nodes
-                    var x_pos = Math.random() * w;
-                    var y_pos = Math.random() * h;
+                    //Create points for each country
+                    //TODO: Randomize position slightly
+                    var x_pos = MAP_GEN.treemap_cells[continent].x; 
+                    var y_pos = MAP_GEN.treemap_cells[continent].y;
+
                     var node = {
                         //radius:Math.random() * 12 + 4, 
                         //Set radius based on country percentage of total data
@@ -189,6 +196,9 @@ MAP_GEN.functions.generate_map = function( map_data ){
     }
     //Resume the force
     force.resume();
+
+    //Show a status update
+    MAP_GEN.functions.console_log('Map generation finished');
 
     //========================================================================
     //Collision function
