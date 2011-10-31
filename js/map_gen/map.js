@@ -28,9 +28,11 @@ MAP_GEN.functions.generate_map = function( map_data ){
 
     //Show a status update
     MAP_GEN.functions.console_log('Creating treemap');
+
     //-----------------------------------
     //Get Treemap of data so we know starting positions for continents
     //-----------------------------------
+    //TODO: BUG? Multiple treemaps generated?
     var treemap = d3.layout.treemap()
         .padding(4)
         .size([w, h])
@@ -81,8 +83,17 @@ MAP_GEN.functions.generate_map = function( map_data ){
             //Type is from 0 to n, where n is the number of
             //  continents
             type:i,
-            x: (cur_cell.x + (cur_cell.dx / 2)),
-            y: (cur_cell.y + (cur_cell.dy / 2))
+            //Set x,y to the tree map position
+            //x: (cur_cell.x + (cur_cell.dx / 2)),
+            //y: (cur_cell.y + (cur_cell.dy / 2))
+            
+            //Randomize: TODO? Improve randomization
+            //x: Math.random() * w,
+            //y: Math.random() * h
+            
+            //Base in center of treemap, but randomize a bit
+            x: (cur_cell.x + (cur_cell.dx / 2)) + (Math.random() * 200),
+            y: (cur_cell.y + (cur_cell.dy / 2)) + (Math.random() * 100)
         };
     });
 
@@ -162,8 +173,10 @@ MAP_GEN.functions.generate_map = function( map_data ){
                     country)){
                     //Create points for each country
                     //TODO: Randomize position slightly
-                    var x_pos = MAP_GEN.treemap_cells[continent].x; 
-                    var y_pos = MAP_GEN.treemap_cells[continent].y;
+                    var x_pos = MAP_GEN.treemap_cells[continent].x 
+                        + Math.random() * 10; 
+                    var y_pos = MAP_GEN.treemap_cells[continent].y
+                        + Math.random() * 10;
 
                     var node = {
                         //radius:Math.random() * 12 + 4, 
