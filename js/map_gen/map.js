@@ -156,6 +156,12 @@ MAP_GEN.functions.generate_map = function( map_data ){
             q.visit(collide(o));
         }
 
+        //When the force is over, trigger function to 
+        //  draw convex hull
+        if(e.alpha < 0.0050037){
+            console.log(e.alpha);
+            console.log('stop');
+        }
 
         //Move all the circles
         svg.selectAll("circle")
@@ -186,7 +192,7 @@ MAP_GEN.functions.generate_map = function( map_data ){
                                 //Multiply the percentage of each country by the
                                 //  average viewport size ( w + h / 2), and then
                                 //  divide that value so the radius isn't so big
-                                (w + h / 2) / 2
+                                (w + (h / 2)) / 2
                             ),
                         type: continent,
                         x: x_pos,
