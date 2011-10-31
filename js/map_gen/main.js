@@ -43,10 +43,18 @@ MAP_GEN = {
             //This function does all the heavy duty of generating the map
             //  defined in generate_map.js
         },
+        generate_continent_convex_hulls: function(){
+           //Function to generate convex hulls for continents.  Defined in
+           //   map.js
+        },
         console_log: function(message){
             //Logs a message to the console div
             $('#footer #console').html(message);
         }
+    },
+
+    map_params: {
+        continent_convex_hull_func_called: false
     }
 };
 
