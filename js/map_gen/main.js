@@ -29,6 +29,8 @@ MAP_GEN = {
         }
     },
 
+    _polygon_data: {},
+
     //Functions
     functions: {
         //Skeleton definition for get_data function.
