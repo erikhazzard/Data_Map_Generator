@@ -15,6 +15,9 @@ MAP_GEN.functions.generate_map = function( map_data ){
 
     //Empty the map div each time this function gets called
     $('#map').empty();
+    //Reset the flag that keeps track if a convex hull has been created
+    //  for the continent
+    MAP_GEN.map_params.continent_convex_hull_func_called = false;
 
     var h = $('#map')[0].offsetHeight;
     var w = $('#map')[0].offsetWidth;
@@ -92,8 +95,8 @@ MAP_GEN.functions.generate_map = function( map_data ){
             //y: Math.random() * h
             
             //Base in center of treemap, but randomize a bit
-            x: (cur_cell.x + (cur_cell.dx / 2)) + (Math.random() * 200),
-            y: (cur_cell.y + (cur_cell.dy / 2)) + (Math.random() * 100)
+            x: (cur_cell.x + (cur_cell.dx / 2)) + (Math.random() * 50),
+            y: (cur_cell.y + (cur_cell.dy / 2)) + (Math.random() * 50)
         };
     });
 
@@ -132,7 +135,7 @@ MAP_GEN.functions.generate_map = function( map_data ){
         //Setup some config variables
         var q = d3.geom.quadtree(nodes),
             //k determines how fast to run the force diagram
-            k = e.alpha * .2,
+            k = e.alpha * 1.5,
             i = 0,
             n = nodes.length,
             o;
@@ -175,17 +178,20 @@ MAP_GEN.functions.generate_map = function( map_data ){
                         //See if a list for the current country's continent
                         //  exist.  If not, this is the first iteration of a
                         //  country in a continent
-                        if(MAP_GEN._polygon_data[temp_node.type] !== undefined){
+                        if(MAP_GEN._polygon_data[temp_node.type] === undefined){
                             MAP_GEN._polygon_data[temp_node.type] = [];
                         }
                         //The array exists by now, so add the country info
-                        MAP_GEN._polygon_data[temp_node.type].append({
+                        MAP_GEN._polygon_data[temp_node.type].push({
                             x: temp_node.x,
                             y: temp_node.y,
                             radius: temp_node.radius
                         })
                     }
                 }
+
+                //Show a status update
+                MAP_GEN.functions.console_log('Force diagram finished');
 
                 //Setup convex hull functions
                 MAP_GEN.functions.generate_continent_convex_hulls();
@@ -208,10 +214,12 @@ MAP_GEN.functions.generate_map = function( map_data ){
                     country)){
                     //Create points for each country
                     //TODO: Randomize position slightly
-                    var x_pos = MAP_GEN.treemap_cells[continent].x 
-                        + Math.random() * 10; 
-                    var y_pos = MAP_GEN.treemap_cells[continent].y
-                        + Math.random() * 10;
+                    var x_pos = MAP_GEN.treemap_cells[continent].children[
+                        country].x 
+                        + Math.random() * 1; 
+                    var y_pos = MAP_GEN.treemap_cells[continent].children[
+                        country].y
+                        + Math.random() * 1;
 
                     var node = {
                         //radius:Math.random() * 12 + 4, 
@@ -244,9 +252,6 @@ MAP_GEN.functions.generate_map = function( map_data ){
     }
     //Resume the force
     force.resume();
-
-    //Show a status update
-    MAP_GEN.functions.console_log('Map generation finished');
 
     //========================================================================
     //Collision function
@@ -295,15 +300,61 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
     var h = $('#map')[0].offsetHeight;
     var w = $('#map')[0].offsetWidth;
 
+    /*
     var vertices = d3.range(15).map(function(d) {
         return [
             //x, y
         ];
     });
+    */
+    var continent_vertices = [];
+    var country_vectex = [];
 
-    MAP_GEN._svg.selectAll("path")
-      .data([d3.geom.hull(vertices)])
-      .attr("d", function(d) { return "M" + d.join("L") + "Z"; })
-	  .enter().append("svg:path")
-	    .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
+    //Setup vertices based on polygon data of each country
+    for(i in MAP_GEN._polygon_data){
+        if(MAP_GEN._polygon_data.hasOwnProperty(i)){
+            //Go through each country and add to vertices
+            for(j in MAP_GEN._polygon_data[i]){
+                if(MAP_GEN._polygon_data[i].hasOwnProperty(j)){
+                    //Store reference to this current country polygon
+                    country_vertex = MAP_GEN._polygon_data[i][j]; 
+                    //Add the current vertex to the list of hull vertices
+
+                    //TODO: Create multiple verties for each country
+                    //TODO: Do this better, also create more vertices
+                    continent_vertices.push([
+                        country_vertex.x - country_vertex.radius, 
+                        country_vertex.y - country_vertex.radius
+                    ]);
+                    continent_vertices.push([
+                        country_vertex.x + country_vertex.radius, 
+                        country_vertex.y - country_vertex.radius
+                    ]);
+                    continent_vertices.push([
+                        country_vertex.x + country_vertex.radius, 
+                        country_vertex.y + country_vertex.radius
+                    ]);
+                    continent_vertices.push([
+                        country_vertex.x - country_vertex.radius, 
+                        country_vertex.y + country_vertex.radius
+                    ]);
+                }
+            }
+
+            //TODO: Jagged Lines
+
+            //Create a convex hull based on the current continent's countries
+            MAP_GEN._svg.selectAll("path" + i)
+              .data([d3.geom.hull(continent_vertices)])
+              .attr("d", function(d) { return "M" + d.join("L") + "Z"; })
+              .enter().append("svg:path")
+                .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
+            
+            //Reset the continent vertices for the next iteration
+            continent_vertices = [];
+        }
+    }
+    
+    //Show status update
+    MAP_GEN.functions.console_log('Finished drawing continent borders');
 }
