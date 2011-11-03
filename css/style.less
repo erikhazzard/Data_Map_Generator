@@ -180,12 +180,25 @@ text {
 }
 
 path {
+}
+#continent_borders_clip path {
+    stroke: transparent !important;
+    /*This is a hack, it gets rid of the border surrounding the clip path
+     * TODO: do this the right way...*/
+    stroke-width:5000px;
+}
+
+#continent_borders_group path {
     fill: #A89263;
-    /*
-    fill: transparent;
-    */
     stroke: #807150;
-    stroke-width:4px;
+    stroke-width:8px;
+}
+.country_border {
+    fill: #A89263;
+    stroke: #807150;
+    stroke-width:3px;
+}
+#continent_borders_group, .country_border {
 }
 /* ========================================================================    
  *

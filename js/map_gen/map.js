@@ -33,6 +33,8 @@ MAP_GEN.functions.generate_map = function( map_data ){
     MAP_GEN.functions.console_log('Creating treemap');
 
     //-----------------------------------
+    //TREEMAP
+    //
     //Get Treemap of data so we know starting positions for continents
     //-----------------------------------
     //TODO: BUG? Multiple treemaps generated?
@@ -68,6 +70,7 @@ MAP_GEN.functions.generate_map = function( map_data ){
         });
 
     //-----------------------------------
+    //FORCE CHART
     //
     //Create force chart to lay out continents
     //
@@ -78,6 +81,16 @@ MAP_GEN.functions.generate_map = function( map_data ){
     var nodes = d3.range(num_continents).map(function(i) {
         //Store reference to current cell
         var cur_cell = MAP_GEN.treemap_cells[i];
+
+        //Set a random y factor
+        if(cur_cell.y < (h/2.5)){
+            var random_factor_y = (Math.random() * 20) * -1;
+        }else{
+            var random_factor_y = (Math.random() * 100); 
+        }
+
+        //Set random x factor
+        var random_factor_x = (Math.random() * 100);
 
         return {
             //type: Math.random() * num_continents | 0,
@@ -95,8 +108,8 @@ MAP_GEN.functions.generate_map = function( map_data ){
             //y: Math.random() * h
             
             //Base in center of treemap, but randomize a bit
-            x: (cur_cell.x + (cur_cell.dx / 2)) + (Math.random() * 50),
-            y: (cur_cell.y + (cur_cell.dy / 2)) + (Math.random() * 50)
+            x: (cur_cell.x + (cur_cell.dx / 2)) + random_factor_x,
+            y: (cur_cell.y + (cur_cell.dy / 2)) + random_factor_y
         };
     });
 
@@ -110,18 +123,14 @@ MAP_GEN.functions.generate_map = function( map_data ){
     force.start();
 
     //Create SVG element
-    var svg = d3.select("#map").append("svg:svg")
+    svg = d3.select("#map").append("svg:svg")
         .attr("width", w)
         .attr("height", h);
 
     //Store a reference to the svg
     MAP_GEN._svg = svg;
 
-    svg.append("svg:rect")
-        .attr("width", w)
-        .attr("height", h);
-
-    //Add in some circles
+    //Add in circles for each continent
     all_selected_nodes = svg.selectAll("circle")
         .data(nodes)
         .enter().append("svg:circle")
@@ -222,6 +231,7 @@ MAP_GEN.functions.generate_map = function( map_data ){
                         + Math.random() * 1;
 
                     var node = {
+                        //SET RADIUS
                         //radius:Math.random() * 12 + 4, 
                         //Set radius based on country percentage of total data
                         radius: MAP_GEN._data.children[
@@ -229,7 +239,8 @@ MAP_GEN.functions.generate_map = function( map_data ){
                                 //Multiply the percentage of each country by the
                                 //  average viewport size ( w + h / 2), and then
                                 //  divide that value so the radius isn't so big
-                                (w + (h / 2)) / 2
+                                //  the last number is a scaling factor
+                                (w + (h / 2)) / 1.8
                             ),
                         type: continent,
                         x: x_pos,
@@ -239,6 +250,9 @@ MAP_GEN.functions.generate_map = function( map_data ){
                     };
 
 
+                    //-------------------
+                    //Draw circles for each country
+                    //-------------------
                     svg.append("svg:circle")
                         .data([node])
                         .attr("cx", function(d) { return d.x; })
@@ -295,24 +309,18 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
     //  vertices
     MAP_GEN.map_params.continent_convex_hull_func_called = true;
     //Loop through each continent
-    console.log('generate called'); 
-
-    var h = $('#map')[0].offsetHeight;
-    var w = $('#map')[0].offsetWidth;
-
-    /*
-    var vertices = d3.range(15).map(function(d) {
-        return [
-            //x, y
-        ];
-    });
-    */
     var continent_vertices = [];
     var country_vectex = [];
 
-    //Create a group for the continent polygons
-    var continent_group = MAP_GEN._svg.append('svg:g')
+
+    //Create another group that will draw the continent borders (the 
+    //  group we created above will clip the continent polygons)
+    var continent_group_border = MAP_GEN._svg.append('svg:g')
         .attr('id', 'continent_borders_group');
+
+    //Create a group for the continent polygons
+    var continent_group_clip = MAP_GEN._svg.append('svg:clipPath')
+        .attr('id', 'continent_borders_clip');
 
     //Setup vertices based on polygon data of each country
     for(i in MAP_GEN._polygon_data){
@@ -348,11 +356,20 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
             //TODO: Jagged Lines
 
             //Create a convex hull based on the current continent's countries
-            continent_group.selectAll("path" + i)
+            //Set up the clip
+            continent_group_clip.selectAll("path" + i)
               .data([d3.geom.hull(continent_vertices)])
               .attr("d", function(d) { return "M" + d.join("L") + "Z"; })
               .enter().append("svg:path")
-                .attr('opacity', '.8')
+                .attr('class', 'continent_clip_path')
+                .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
+
+            //Do it again for just the border
+            continent_group_border.selectAll("path" + i)
+              .data([d3.geom.hull(continent_vertices)])
+              .attr("d", function(d) { return "M" + d.join("L") + "Z"; })
+              .enter().append("svg:path")
+                .attr('class', 'continent_border_path')
                 .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
             
             //Reset the continent vertices for the next iteration
@@ -394,6 +411,7 @@ MAP_GEN.functions.generate_voronoi_countries = function(){
     }
 
     var country_group = MAP_GEN._svg.append('svg:g')
+        .attr('clip-path', 'url(#continent_borders_clip)')
         .attr('id', 'country_borders_group');
 
     //Add countries to the group
@@ -401,15 +419,7 @@ MAP_GEN.functions.generate_voronoi_countries = function(){
         .data(d3.geom.voronoi(vertices))
       .enter().append("svg:path")
         .attr("class", function(d, i) { return i ? "q" + (i % 9) + "-9 country_border" : "country_border"; })
-        .attr('opacity','.7')
         .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
 
-    /* Draw circles for diagram.  Dont need to do this.
-    MAP_GEN._svg.selectAll("circle")
-        .data(vertices)
-      .enter().append("svg:circle")
-        .attr("transform", function(d) { return "translate(" + d + ")"; })
-        .attr("r", 2);
-    */
     MAP_GEN.functions.console_log('Completed drawing map!', true); 
 }
