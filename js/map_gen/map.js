@@ -310,6 +310,10 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
     var continent_vertices = [];
     var country_vectex = [];
 
+    //Create a group for the continent polygons
+    var continent_group = MAP_GEN._svg.append('svg:g')
+        .attr('id', 'continent_borders_group');
+
     //Setup vertices based on polygon data of each country
     for(i in MAP_GEN._polygon_data){
         if(MAP_GEN._polygon_data.hasOwnProperty(i)){
@@ -344,10 +348,11 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
             //TODO: Jagged Lines
 
             //Create a convex hull based on the current continent's countries
-            MAP_GEN._svg.selectAll("path" + i)
+            continent_group.selectAll("path" + i)
               .data([d3.geom.hull(continent_vertices)])
               .attr("d", function(d) { return "M" + d.join("L") + "Z"; })
               .enter().append("svg:path")
+                .attr('opacity', '.8')
                 .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
             
             //Reset the continent vertices for the next iteration
@@ -388,10 +393,15 @@ MAP_GEN.functions.generate_voronoi_countries = function(){
         }
     }
 
-    MAP_GEN._svg.selectAll("path")
+    var country_group = MAP_GEN._svg.append('svg:g')
+        .attr('id', 'country_borders_group');
+
+    //Add countries to the group
+    country_group.selectAll(".country_border")
         .data(d3.geom.voronoi(vertices))
       .enter().append("svg:path")
-        .attr("class", function(d, i) { return i ? "q" + (i % 9) + "-9" : null; })
+        .attr("class", function(d, i) { return i ? "q" + (i % 9) + "-9 country_border" : "country_border"; })
+        .attr('opacity','.7')
         .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
 
     /* Draw circles for diagram.  Dont need to do this.
@@ -401,4 +411,5 @@ MAP_GEN.functions.generate_voronoi_countries = function(){
         .attr("transform", function(d) { return "translate(" + d + ")"; })
         .attr("r", 2);
     */
+    MAP_GEN.functions.console_log('Completed drawing map!', true); 
 }
