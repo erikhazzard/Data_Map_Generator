@@ -31,6 +31,9 @@ MAP_GEN = {
 
     _polygon_data: {},
 
+    //Reference to SVG element
+    _svg: undefined,
+
     //Functions
     functions: {
         //Skeleton definition for get_data function.
@@ -49,9 +52,19 @@ MAP_GEN = {
            //Function to generate convex hulls for continents.  Defined in
            //   map.js
         },
-        console_log: function(message){
+        generate_voronoi_countries: function(){
+            //Function that creates a voronoi diagram for country borders
+        },
+        console_log: function(message, hide_loading_bar){
+            if(hide_loading_bar === undefined){
+                var hide_loading_bar = false;
+            }
             //Logs a message to the console div
-            $('#footer #console').html(message);
+            $('#footer #console #console_text').html(message);
+
+            if(hide_loading_bar === true){
+                $('#console_loading_bar').css('display','none');
+            }
         }
     },
 

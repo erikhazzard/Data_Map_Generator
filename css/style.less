@@ -36,7 +36,7 @@
 
 /* Layout Related */
 @header_height: 55px;
-@footer_height: 25px;
+@footer_height: 30px;
 @inner_padding_width: 2%;
 @content_top_padding: 20px;
 
@@ -307,13 +307,26 @@ path {
             border: 1px solid #909090;
             bottom:4px;
             font-family: 'Ubuntu Mono','Monaco',sans-serif;
-            font-size:.8em;
+            font-size:.9em;
             left:2%;
-            padding:2px;
+            overflow: hidden;
+            padding:0;
             position:absolute;
             right:350px;
-            text-align:center;
+            text-align:left;
             top:4px;
+        }
+        #footer #console #console_text {
+            padding:4px 0 0 170px;
+        }
+        #footer #console #console_loading_bar {
+            height:10px;
+            left:4px;
+            overflow:hidden;
+            padding:0;
+            position:absolute;
+            top: 5px;
+            width:150px;
         }
         #footer a {
             margin:0 1em 0 2em;

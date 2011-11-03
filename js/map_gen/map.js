@@ -355,6 +355,50 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
         }
     }
     
+    //Draw voronoi diagram
+    MAP_GEN.functions.generate_voronoi_countries();
+}
+
+
+/* ========================================================================    
+ *
+ * generate_voronoi_countries()
+ *
+ * ======================================================================== */
+MAP_GEN.functions.generate_voronoi_countries = function(){
     //Show status update
-    MAP_GEN.functions.console_log('Finished drawing continent borders');
+    MAP_GEN.functions.console_log('Drawing voronoi diagram for countries');
+
+    var h = $('#map')[0].offsetHeight;
+    var w = $('#map')[0].offsetWidth;
+
+    //Set vertices for each country of each continent
+    //FOR NOW, use one continent
+    vertices = [];
+    for(var continent in MAP_GEN._polygon_data){
+        if(MAP_GEN._polygon_data.hasOwnProperty(continent)){
+            for(country in MAP_GEN._polygon_data[continent]){
+                if(MAP_GEN._polygon_data[continent].hasOwnProperty(country)){
+                    vertices.push([
+                        MAP_GEN._polygon_data[continent][country].x,
+                        MAP_GEN._polygon_data[continent][country].y
+                    ]);
+                }
+            }
+        }
+    }
+
+    MAP_GEN._svg.selectAll("path")
+        .data(d3.geom.voronoi(vertices))
+      .enter().append("svg:path")
+        .attr("class", function(d, i) { return i ? "q" + (i % 9) + "-9" : null; })
+        .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
+
+    /* Draw circles for diagram.  Dont need to do this.
+    MAP_GEN._svg.selectAll("circle")
+        .data(vertices)
+      .enter().append("svg:circle")
+        .attr("transform", function(d) { return "translate(" + d + ")"; })
+        .attr("r", 2);
+    */
 }
