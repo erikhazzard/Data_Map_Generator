@@ -418,8 +418,32 @@ MAP_GEN.functions.generate_voronoi_countries = function(){
     country_group.selectAll(".country_border")
         .data(d3.geom.voronoi(vertices))
       .enter().append("svg:path")
-        .attr("class", function(d, i) { return i ? "q" + (i % 9) + "-9 country_border" : "country_border"; })
-        .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
+        .attr("class", function(d, i) { 
+            return i ? "q" + (i % 9) + "-9 country_border" : "country_border"; 
+        })
+        .attr("d", function(d) { 
+            //Randomize the borders a little bit.  d contains an array of points
+            //  so let's just add some new points in between each set
+            var data_points = [];
+            var d_length=d.length;
+
+            for(var i=0; i<d_length; i++){
+                //Push the first point
+                data_points.push(d[i]);
+
+                //Push a point in between this index and the next
+                if(i + 1 !== d_length){
+                    data_points.push([
+                        //push x
+                        ((d[i][0] + d[i+1][0]) / 2) + 2,
+                        //push y
+                        ((d[i][1] + d[i+1][1]) / 2) + 2
+                    ]);
+                }
+            }
+
+            return "M" + data_points.join("L") + "Z"; 
+        });
 
     MAP_GEN.functions.console_log('Completed drawing map!', true); 
 }
