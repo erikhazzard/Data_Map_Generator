@@ -439,6 +439,7 @@ MAP_GEN.functions.generate_voronoi_countries = function(){
                         //push y
                         ((d[i][1] + d[i+1][1]) / 2) + 2
                     ]);
+
                 }
             }
 
