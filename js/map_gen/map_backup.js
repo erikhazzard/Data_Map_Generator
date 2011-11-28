@@ -19,7 +19,6 @@ MAP_GEN.functions.generate_map = function( map_data ){
     //  for the continent
     MAP_GEN.map_params.continent_convex_hull_func_called = false;
 
-    //Get width and height of the svg element
     var h = $('#map')[0].offsetHeight;
     var w = $('#map')[0].offsetWidth;
 
@@ -27,9 +26,7 @@ MAP_GEN.functions.generate_map = function( map_data ){
     //Create nodes for each continent. These are static nodes which
     //  country nodes will go to
     //-----------------------------------
-    //Get the number of continents 
     var num_continents = MAP_GEN._data.children.length;
-    //And colors for the cirlces
     var color = d3.scale.category10();
 
     //Show a status update
@@ -40,12 +37,12 @@ MAP_GEN.functions.generate_map = function( map_data ){
     //
     //Get Treemap of data so we know starting positions for continents
     //-----------------------------------
+    //TODO: BUG? Multiple treemaps generated?
     var treemap = d3.layout.treemap()
         .padding(4)
         .size([w, h])
         .value(function(d) { return d.size; });
 
-    //Select and setup the svg element 
     var svg = d3.select("#treemap_hidden").append("svg:svg")
         .attr("width", w)
         .attr("height", h)
@@ -55,7 +52,6 @@ MAP_GEN.functions.generate_map = function( map_data ){
     //Store reference to cells 
     MAP_GEN.treemap_cells = []; 
 
-    //Create a cell for each treemap element
     var cell = svg.data([MAP_GEN._data]).selectAll("g")
         .data(treemap)
         .enter().append("svg:g")
@@ -87,7 +83,6 @@ MAP_GEN.functions.generate_map = function( map_data ){
         var cur_cell = MAP_GEN.treemap_cells[i];
 
         //Set a random y factor
-        //  Don't place it too far above or below the center
         if(cur_cell.y < (h/2.5)){
             var random_factor_y = (Math.random() * 20) * -1;
         }else{
@@ -95,11 +90,8 @@ MAP_GEN.functions.generate_map = function( map_data ){
         }
 
         //Set random x factor
-        var random_factor_x = (Math.random() * 70);
+        var random_factor_x = (Math.random() * 100);
 
-        //====================================================================
-        //Initial continent center points
-        //====================================================================
         return {
             //type: Math.random() * num_continents | 0,
             radius: 5,
@@ -107,13 +99,15 @@ MAP_GEN.functions.generate_map = function( map_data ){
             //Type is from 0 to n, where n is the number of
             //  continents
             type:i,
+            //Set x,y to the tree map position
+            //x: (cur_cell.x + (cur_cell.dx / 2)),
+            //y: (cur_cell.y + (cur_cell.dy / 2))
             
             //Randomize: TODO? Improve randomization
             //x: Math.random() * w,
             //y: Math.random() * h
             
-            //Set x,y to the tree map position
-            //  Base in center of treemap, but randomize a bit
+            //Base in center of treemap, but randomize a bit
             x: (cur_cell.x + (cur_cell.dx / 2)) + random_factor_x,
             y: (cur_cell.y + (cur_cell.dy / 2)) + random_factor_y
         };
@@ -219,11 +213,9 @@ MAP_GEN.functions.generate_map = function( map_data ){
             .attr("cy", function(d) { return d.y; });
     });
 
-    //========================================================================
-    //
+    //-----------------------------------
     //Create point for each country
-    //
-    //========================================================================
+    //-----------------------------------
     for(var continent in MAP_GEN._data.children){
         if(MAP_GEN._data.children.hasOwnProperty(continent)){
             for(country in MAP_GEN._data.children[continent].children){
@@ -239,24 +231,16 @@ MAP_GEN.functions.generate_map = function( map_data ){
                         + Math.random() * 1;
 
                     var node = {
-                        //---------------
                         //SET RADIUS
-                        //(Important): Set sisze of each country
-                        //---------------
-                        //TODO: Use some sort of log like scale to size countries
-                        //  so they are still porportional, but small ones don't
-                        //  get too distorted by large data
+                        //radius:Math.random() * 12 + 4, 
                         //Set radius based on country percentage of total data
                         radius: MAP_GEN._data.children[
                             continent].children[country].percentage * (
                                 //Multiply the percentage of each country by the
                                 //  average viewport size ( w + h / 2), and then
                                 //  divide that value so the radius isn't so big
-                                //NOTE:
-                                //  the last number is a scaling factor. The 
-                                //  smaller the factor, the larger the country
-                                //  circles will be
-                                (w + (h / 2)) / 1.4
+                                //  the last number is a scaling factor
+                                (w + (h / 2)) / 1.8
                             ),
                         type: continent,
                         x: x_pos,
@@ -338,12 +322,6 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
     var continent_group_clip = MAP_GEN._svg.append('svg:clipPath')
         .attr('id', 'continent_borders_clip');
 
-    //-----------------------------------
-    //Convex hull data
-    //-----------------------------------
-    //TODO: Jagged Lines
-    //For the jagged lines, we need to create random points between each
-    //  vertex
     //Setup vertices based on polygon data of each country
     for(i in MAP_GEN._polygon_data){
         if(MAP_GEN._polygon_data.hasOwnProperty(i)){
@@ -353,45 +331,32 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
                     //Store reference to this current country polygon
                     country_vertex = MAP_GEN._polygon_data[i][j]; 
                     //Add the current vertex to the list of hull vertices
-                    c_v_x = country_vertex.x;
-                    c_v_y = country_vertex.y;
-                    //The radius (c_v_r) determines how far out to place the
-                    //  vertices for the convex hull.  The larger the radius,
-                    //  the further out the convex hull will extent.  
-                    //  A radius of 1 will pretty much completely cover
-                    //  the entire continent, but may be 'too much' and cause
-                    //  overlaps for nearby continents
-                    c_v_r = country_vertex.radius / 1.3;
-                    
+
                     //TODO: Create multiple verties for each country
                     //TODO: Do this better, also create more vertices
                     continent_vertices.push([
-                        c_v_x - c_v_r, 
-                        c_v_y - c_v_r
+                        country_vertex.x - country_vertex.radius, 
+                        country_vertex.y - country_vertex.radius
                     ]);
                     continent_vertices.push([
-                        c_v_x + c_v_r, 
-                        c_v_y - c_v_r
+                        country_vertex.x + country_vertex.radius, 
+                        country_vertex.y - country_vertex.radius
                     ]);
                     continent_vertices.push([
-                        c_v_x + c_v_r, 
-                        c_v_y + c_v_r
+                        country_vertex.x + country_vertex.radius, 
+                        country_vertex.y + country_vertex.radius
                     ]);
                     continent_vertices.push([
-                        c_v_x - c_v_r, 
-                        c_v_y + c_v_r
+                        country_vertex.x - country_vertex.radius, 
+                        country_vertex.y + country_vertex.radius
                     ]);
-
                 }
             }
 
-
-            //-----------------------------------
-            //Create Polygon
-            //-----------------------------------
+            //TODO: Jagged Lines
 
             //Create a convex hull based on the current continent's countries
-            //Set up the clip, which will limit what the coronoi diagram shows
+            //Set up the clip
             continent_group_clip.selectAll("path" + i)
               .data([d3.geom.hull(continent_vertices)])
               .attr("d", function(d) { return "M" + d.join("L") + "Z"; })
@@ -406,12 +371,6 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
               .enter().append("svg:path")
                 .attr('class', 'continent_border_path')
                 .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
-
-
-
-            //TODO:Create continent border hull, then get the coords for each point
-            //  then randomie borders between points
-
             
             //Reset the continent vertices for the next iteration
             continent_vertices = [];
@@ -436,6 +395,7 @@ MAP_GEN.functions.generate_voronoi_countries = function(){
     var w = $('#map')[0].offsetWidth;
 
     //Set vertices for each country of each continent
+    //FOR NOW, use one continent
     vertices = [];
     for(var continent in MAP_GEN._polygon_data){
         if(MAP_GEN._polygon_data.hasOwnProperty(continent)){
