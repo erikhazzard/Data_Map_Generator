@@ -333,11 +333,21 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
     //  the country's center point, radius, and various angles to generate
     //  vertices
     MAP_GEN.map_params.continent_convex_hull_func_called = true;
-    //Loop through each continent
+
+    //Continent vertices contains the vertices for the entire continent
+    //  NOTE: This is for the convex hull, which is not being used anymore
     var continent_vertices = [];
+    var jagged_borders = [];
+
+    //Country vertex contains the vertex for a single country
     var country_vectex = [];
     var random_factor = undefined;
+    var jagged_step_amount = 3;
+    var jaggedness_factor = 6;
 
+    var use_x_coord = true;
+    var use_y_coord = true;
+    var jagged_vertex = [];
 
     //IN PROGRESS NOTE: Here we're creating paths for
     //  the continent borders and the clipping.  
@@ -384,7 +394,9 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
     clip_index_count = 0;
 
     //-----------------------------------
-    //Convex hull data
+    //
+    //Build country clip paths 
+    //
     //-----------------------------------
     //TODO: Jagged Lines
     //For the jagged lines, we need to create random points between each
@@ -400,8 +412,12 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
                     //Add the current vertex to the list of hull vertices
                     c_v_x = country_vertex.x;
                     c_v_y = country_vertex.y;
+                    //Setup a random factor which will allow us to create a bounding
+                    //  box that doesn't look exactly like a square every time (
+                    //  this is most useful for small continents which have one or
+                    //  two countries)
                     random_factor = function(){ 
-                        return -7 + Math.random() * 14;
+                        return -4 + Math.random() * 8;
                     }
 
                     //The radius (c_v_r) determines how far out to place the
@@ -447,13 +463,169 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
             //  clip path
             for(j in MAP_GEN._polygon_data[i]){
                 if(MAP_GEN._polygon_data[i].hasOwnProperty(j)){
+
+                    //Create the clipping path, which will limit the voronoi
+                    //  diagram drawn later
                     continent_group_clip_array[clip_index_count].selectAll(
                         "path" + clip_index_count)
                       .data([d3.geom.hull(continent_vertices)])
-                      .attr("d", function(d) { return "M" + d.join("L") + "Z"; })
                       .enter().append("svg:path")
                         .attr('class', 'continent_clip_path')
-                        .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
+                        .attr("d", function(d) { 
+                            //We have the points for the convex hull already,
+                            //  so let's randomize it a bit
+                            //reset the variable
+                            jagged_borders = [];
+
+                            //Loop through the continent's vertices and
+                            //  add them, along with intermediate points (to
+                            //  create the jagged effect) to the jagged_borders
+                            //  array
+                            for(k=0, d_len=d.length; k < d_len; k++){
+                                //Add the current vertex to the jagged_borders
+                                jagged_borders.push(d[k]);
+
+                                //If we're not at the final vertex, then add 
+                                //  some points in between this vertex and the
+                                //  next one
+                                if(k + 1 < d_len){
+                                    //Add some random vertices
+                                    // We'll do this in a loop so we can add
+                                    // an arbitrary amount of jaggedness
+
+                                    //The way this works is we add a vertex
+                                    //  in between the current point and the
+                                    //  next one (this doesn't happen if we're 
+                                    //  at the last index
+                                    //The 'in between' points will be added
+                                    //  based on some 'step' variable (
+                                    //  as opposed to recursively getting
+                                    //  midpoints or something).  The step
+                                    //  variable will be either negative
+                                    //  or positive depending if the
+                                    //  next continent border vertex is
+                                    //  greater or less than the current
+                                    //  one
+                                    jagged_cur_iteration=1;
+                                    while(true){
+                                        //We need to keep track of if
+                                        //  the x and y coords should be used.
+                                        //  If the step_amount goes over the
+                                        //  next coordinates location, we dont
+                                        //  want to use it
+                                        use_x_coord = true;
+                                        use_y_coord = true;
+                                        
+                                        //By default, the jagged_vertex
+                                        //will contain the next 
+                                        //  point's coords
+                                        jagged_vertex = [
+                                            d[k+1][0],
+                                            d[k+1][1]
+                                        ];
+                                        
+                                        //The current step amount is equal to
+                                        //  the base step amount * the current
+                                        //  iteration
+                                        local_step_amount = (jagged_step_amount
+                                            * jagged_cur_iteration);
+
+                                        //CHECK FOR X
+                                        //-----------
+                                        //Check to see if we need to make the
+                                        //  step variable positive or negative
+                                        if(d[k][0] < d[k+1][0]){
+                                            //Positive amount 
+                                            //Check if this amount exceeds
+                                            //  the next vertex
+                                            if(d[k][0] + local_step_amount 
+                                                >= d[k+1][0]){
+                                                //Dont use the x coord
+                                                use_x_coord = false;
+                                            }
+                                        }else{
+                                            //Negative amount
+                                            local_step_amount = (local_step_amount 
+                                                * -1);
+                                            if(d[k][0] + local_step_amount 
+                                                <= d[k+1][0]){
+                                                //Dont use the x coord
+                                                use_x_coord = false;
+                                            }
+                                        }
+
+                                        //If we can use the x coord, set it up
+                                        if(use_x_coord === true){
+                                            jagged_vertex[0] = (
+                                                (d[k][0] + local_step_amount) +
+                                                (
+                                                 (jaggedness_factor * -1)
+                                                    + (Math.random() 
+                                                    * (jaggedness_factor * 2))
+                                                 )
+                                            );
+                                        }
+
+                                        //CHECK FOR Y
+                                        //-----------
+                                        //reset local step count
+                                        local_step_amount = (jagged_step_amount
+                                            * jagged_cur_iteration);
+                                        if(d[k][1] < d[k+1][1]){
+                                            //Positive amount 
+                                            if(d[k][1] + local_step_amount 
+                                                >= d[k+1][1]){
+                                                use_y_coord = false;
+                                            }
+                                        }else{
+                                            //Negative amount
+                                            local_step_amount = (local_step_amount 
+                                                * -1);
+                                            if(d[k][1] + local_step_amount 
+                                                <= d[k+1][1]){
+                                                //Dont use the x coord
+                                                use_y_coord = false;
+                                            }
+                                        }
+
+                                        //If we can use the y coord, set it up
+                                        if(use_y_coord === true){
+                                            jagged_vertex[1] = (
+                                                (d[k][1] + local_step_amount) +
+                                                (
+                                                 (jaggedness_factor * -1)
+                                                    + (Math.random() 
+                                                    * (jaggedness_factor * 2))
+                                                 )
+                                            );
+                                        }
+
+                                        //Increase the loop counter
+                                        jagged_cur_iteration += 1;
+
+                                        //If we CAN use both x and y coords,
+                                        //  use them.  Otherwise, if both x
+                                        //  and y coords are not usable then
+                                        //  end the loop
+                                        if(use_x_coord === true 
+                                            && use_y_coord === true){
+                                            //Push the jagged_vertex to the 
+                                            //  jagged_borders array
+                                            jagged_borders.push(
+                                                [ jagged_vertex[0],
+                                                    jagged_vertex[1]]
+                                            );
+                                        }else{
+                                            break;
+                                        }
+
+                                    }
+                                }
+                            }
+
+                            //Set up the path for this clipping path
+                            return "M" + jagged_borders.join("L") + "Z"; 
+                        });
 
                     //We're done with the clipping path array item, so increase
                     //  the count for it
@@ -461,10 +633,12 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
                 }
             }
 
-
             //-----------------------------------
+            //CONVEX HULL clip path and polygon
+            //NOTE: This is no longer being used
             //Create Clipping Paths and Polygon
             //-----------------------------------
+            /*
             //CLIPPING PATH
             //Create a convex hull based on the current continent's countries
             //Set up the clip, which will limit what the coronoi diagram shows
@@ -477,13 +651,17 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
 
             //POLYGON BORDER
             //Do it again for just the border
-
-
-            //TODO:Create continent border hull, then get the coords for each point
-            //  then randomize borders between points
-
+            continent_group_border.selectAll("path" + i)
+              .data([d3.geom.hull(continent_vertices)])
+              .attr("d", function(d) { return "M" + d.join("L") + "Z"; })
+              .enter().append("svg:path")
+                .attr('class', 'continent_border_path')
+                .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
+            */
             
+            //-----------------------------------
             //Reset the continent vertices for the next iteration
+            //-----------------------------------
             continent_vertices = [];
         }
     }
@@ -545,6 +723,9 @@ MAP_GEN.functions.generate_voronoi_countries = function(){
             })
             .attr('clip-path', function(d,i){
                 return "url(#continent_borders_clip_" + i + ")";
+            })
+            .attr('id', function(d,i){
+                return 'country_voronoi_' + i;
             })
             .attr("d", function(d) { 
                 // d contains an array of points
