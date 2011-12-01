@@ -95,7 +95,7 @@ $(document).ready(function(){
     //  the map
     MAP_GEN.functions.generate_data_and_map({
         directory: 'data/',
-        file_name: 'dataset.json'
+        file_name: 'dataset_simple.json'
     });
 
     $(window).resize(function(){

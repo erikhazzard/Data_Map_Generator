@@ -35,6 +35,9 @@ MAP_GEN.functions.generate_map = function( map_data ){
     //Show a status update
     MAP_GEN.functions.console_log('Creating treemap');
 
+    var country_circle_scale_factor = 2.4;
+
+
     //-----------------------------------
     //TREEMAP
     //
@@ -265,7 +268,7 @@ MAP_GEN.functions.generate_map = function( map_data ){
                                 //  the last number is a scaling factor. The 
                                 //  smaller the factor, the larger the country
                                 //  circles will be
-                                (w + (h / 2)) / 1.4
+                                (w + (h / 2)) / country_circle_scale_factor
                             ),
                         type: continent,
                         x: x_pos,
@@ -343,7 +346,7 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
     var country_vectex = [];
     var random_factor = undefined;
     var jagged_step_amount = 3;
-    var jaggedness_factor = 6;
+    var jaggedness_factor = 5;
 
     var use_x_coord = true;
     var use_y_coord = true;
@@ -470,6 +473,8 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
                         "path" + clip_index_count)
                       .data([d3.geom.hull(continent_vertices)])
                       .enter().append("svg:path")
+                        .attr('id', function(d,z){
+                            return 'continent_clip_path_' + z})
                         .attr('class', 'continent_clip_path')
                         .attr("d", function(d) { 
                             //We have the points for the convex hull already,
@@ -571,6 +576,7 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
                                         //reset local step count
                                         local_step_amount = (jagged_step_amount
                                             * jagged_cur_iteration);
+                                        
                                         if(d[k][1] < d[k+1][1]){
                                             //Positive amount 
                                             if(d[k][1] + local_step_amount 
@@ -603,20 +609,21 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
                                         //Increase the loop counter
                                         jagged_cur_iteration += 1;
 
-                                        //If we CAN use both x and y coords,
-                                        //  use them.  Otherwise, if both x
-                                        //  and y coords are not usable then
-                                        //  end the loop
-                                        if(use_x_coord === true 
-                                            && use_y_coord === true){
+                                        //If we CAN'T use both x and y coords,
+                                        //  end the loop.  
+                                        //  Otherwise, if both x
+                                        //  and y coords are usable then
+                                        //  use them
+                                        if(use_x_coord === false 
+                                            && use_y_coord === false ){
+                                            break;
+                                        }else{
                                             //Push the jagged_vertex to the 
                                             //  jagged_borders array
                                             jagged_borders.push(
                                                 [ jagged_vertex[0],
                                                     jagged_vertex[1]]
                                             );
-                                        }else{
-                                            break;
                                         }
 
                                     }
