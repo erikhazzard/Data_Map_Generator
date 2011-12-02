@@ -70,6 +70,29 @@ MAP_GEN = {
 
     map_params: {
         continent_convex_hull_func_called: false
+    },
+
+    config: {
+        //Force Diagram config
+        //  How big to scale the country circles.  
+        //  Smaller scale = larger circles
+        //  (Note: This also sort of depends on the data.  
+        //  The bigger the data set, the smaller the scale should
+        //  be)
+        force_diagram_country_scale: 2.7,
+
+        //Convex hull generation config
+        convex_hull_randomize_points: function(){
+            return -16 + Math.random() * 32;
+        },
+        //  A distance factor of 1 will pretty much completely cover
+        //  the entire continent, but may be 'too much' and cause
+        //  overlaps for nearby continents
+        convex_hull_distance_factor: 1.2,
+
+        //Jagged boreder config
+        jagged_step_amount: 14,
+        jaggedness_factor: 8
     }
 };
 
