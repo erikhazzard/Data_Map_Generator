@@ -101,8 +101,8 @@ MAP_GEN = {
         //-------------------------------
         //Jagged boreder config
         //-------------------------------
-        jagged_step_amount: 5,
-        jaggedness_factor: 3,
+        jagged_step_amount: 7,
+        jaggedness_factor: 2,
 
         //'Extra' randomness added to jaggedness
         //This extra randomness helps creates inlets and other border
@@ -111,13 +111,13 @@ MAP_GEN = {
         //  This percent specifies how often this extra randomness
         //  will occurr.  Specify a whole number from 0 to 100 (0 is
         //  never, 100 is every time)
-        jagged_extra_random_percent_x: 30,
-        jagged_extra_random_percent_y: 30,
+        jagged_extra_random_percent_x: 20,
+        jagged_extra_random_percent_y: 20,
         //Amount to multiple extra randomness
         //  This is the scale that the extra jaggedness will be set to
         //  2 would be twice the amount of the jagged_step_facor
-        jagged_extra_random_scale_x: 3,
-        jagged_extra_random_scale_y: 3
+        jagged_extra_random_scale_x: 3.5,
+        jagged_extra_random_scale_y: 3.5
     }
 };
 
