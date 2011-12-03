@@ -361,8 +361,8 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
         .attr('id', 'continent_borders_group');
 
     //Create a group for the continent polygons
-    var continent_group_clip = MAP_GEN._svg.append('svg:clipPath')
-        .attr('id', 'continent_borders_clip');
+    var continent_border_polygon = MAP_GEN._svg.append('svg:g')
+        .attr('id', 'continent_borders_polygon');
     
     //Create a group for EACH continent polygon
     var continent_group_clip_array = [];
@@ -480,8 +480,7 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
                             //Set the country key to be a combination of i 
                             // and j
                             //  i is the current continent key 
-                            //  j is the current country key
-                            country_key = i + '_' + j;
+                            country_key = i;
                             return MAP_GEN.functions.generate_jagged_continent_borders(
                                 d,
                                 country_key);
@@ -492,6 +491,7 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
                     clip_index_count += 1;
                 }
             }
+
 
             //-----------------------------------
             //CONVEX HULL clip path and polygon
@@ -518,6 +518,20 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
                 .attr('class', 'continent_border_path')
                 .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
             */
+
+            continent_border_polygon.append("svg:path")
+                .attr('id', function(d,z){
+                    return 'continent_border_polygon' + z})
+                .attr('class', 'continent_border_path')
+                .attr("d", function(d) { 
+                    //Set the country key to be a combination of i 
+                    // and j
+                    //  i is the current continent key 
+                    country_key = i;
+                    return MAP_GEN.functions.generate_jagged_continent_borders(
+                        undefined,
+                        country_key);
+            });
 
             //-----------------------------------
             //Reset the continent vertices for the next iteration
@@ -551,8 +565,10 @@ MAP_GEN.functions.generate_jagged_continent_borders = function(d,
     if(country_key !== undefined){
         if(MAP_GEN.jagged_border_paths[country_key] !== undefined){
             //The path string already exists, so return it
+            return MAP_GEN.jagged_border_paths[country_key];
         }
     }
+    if(d === undefined){ return false; }
 
     //Country vertex contains the vertex for a single country
     var country_vectex = [];
