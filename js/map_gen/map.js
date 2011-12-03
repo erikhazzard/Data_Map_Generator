@@ -476,6 +476,7 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
                             return 'continent_clip_path_' + z})
                         .attr('class', 'continent_clip_path')
                         .attr("d", function(d) { 
+                            //console.log(MAP_GEN._polygon_data[i], i, j);
                             return MAP_GEN.functions.generate_jagged_continent_borders(d);
                     });
 
@@ -531,7 +532,8 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
 /* ========================================================================    
  * Generate jagged_continent_borders path string
  * ======================================================================== */
-MAP_GEN.functions.generate_jagged_continent_borders = function(d){
+MAP_GEN.functions.generate_jagged_continent_borders = function(d, country_id){
+    console.log(d)
     //This function takes in an array of points (d) and returns a path
     //  string which can be used to generate paths (clipping / polygon
     //  paths)

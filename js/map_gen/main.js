@@ -72,6 +72,14 @@ MAP_GEN = {
         continent_convex_hull_func_called: false
     },
 
+
+    //jagged_border_paths contains a has of continent_country IDs
+    //  which have values of the path string used to create clipping / polygon
+    //  paths
+    jagged_border_paths: {
+
+    },
+
     config: {
         //Force Diagram config
         //  How big to scale the country circles.  
