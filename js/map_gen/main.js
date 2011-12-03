@@ -11,7 +11,7 @@
 //============================================================================
 MAP_GEN = {
     //MAP_GEN is the name space for this app.  
-    //
+
     //define the _data object, which is contains all the continents, countries,
     //  and info about htem
     //  NOTE: this is just a skeleton definition, the actual object will be 
@@ -87,20 +87,37 @@ MAP_GEN = {
         //  (Note: This also sort of depends on the data.  
         //  The bigger the data set, the smaller the scale should
         //  be)
-        force_diagram_country_scale: 2.7,
+        force_diagram_country_scale: 2.1,
 
         //Convex hull generation config
         convex_hull_randomize_points: function(){
-            return -16 + Math.random() * 32;
+            return -35 + Math.random() * 70;
         },
         //  A distance factor of 1 will pretty much completely cover
         //  the entire continent, but may be 'too much' and cause
         //  overlaps for nearby continents
         convex_hull_distance_factor: 1.2,
 
+        //-------------------------------
         //Jagged boreder config
-        jagged_step_amount: 14,
-        jaggedness_factor: 8
+        //-------------------------------
+        jagged_step_amount: 5,
+        jaggedness_factor: 3,
+
+        //'Extra' randomness added to jaggedness
+        //This extra randomness helps creates inlets and other border
+        //  features
+        //
+        //  This percent specifies how often this extra randomness
+        //  will occurr.  Specify a whole number from 0 to 100 (0 is
+        //  never, 100 is every time)
+        jagged_extra_random_percent_x: 30,
+        jagged_extra_random_percent_y: 30,
+        //Amount to multiple extra randomness
+        //  This is the scale that the extra jaggedness will be set to
+        //  2 would be twice the amount of the jagged_step_facor
+        jagged_extra_random_scale_x: 3,
+        jagged_extra_random_scale_y: 3
     }
 };
 
@@ -126,7 +143,7 @@ $(document).ready(function(){
     //  the map
     MAP_GEN.functions.generate_data_and_map({
         directory: 'data/',
-        file_name: 'dataset_simple.json'
+        file_name: 'dataset.json'
     });
 
     $(window).resize(function(){
