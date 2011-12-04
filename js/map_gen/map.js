@@ -909,6 +909,8 @@ MAP_GEN.functions.generate_jagged_continent_borders = function(d,
  *
  * ======================================================================== */
 MAP_GEN.functions.generate_voronoi_countries = function(){
+    //TODO: Do a voronoi diagram for EACH continent, not just a single diagram
+    //
     //Show status update
     MAP_GEN.functions.console_log('Drawing voronoi diagram for countries');
 
