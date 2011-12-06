@@ -47,8 +47,6 @@ MAP_GEN.functions.generate_map = function( map_data ){
         .size([w, h])
         .value(function(d) { return d.size; });
 
-    console.log(treemap);
-
     //Select and setup the svg element 
     var svg = d3.select("#treemap_hidden").append("svg:svg")
         .attr("width", w)
