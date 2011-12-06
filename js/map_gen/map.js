@@ -43,10 +43,11 @@ MAP_GEN.functions.generate_map = function( map_data ){
     //
     //Get Treemap of data so we know starting positions for continents
     //-----------------------------------
-    var treemap = d3.layout.treemap()
-        .padding(4)
+    var treemap = d3.layout.treemap().padding(4)
         .size([w, h])
         .value(function(d) { return d.size; });
+
+    console.log(treemap);
 
     //Select and setup the svg element 
     var svg = d3.select("#treemap_hidden").append("svg:svg")
@@ -68,13 +69,13 @@ MAP_GEN.functions.generate_map = function( map_data ){
     cell.append("svg:rect")
         .attr("width", function(d) { return d.dx; })
         .attr("height", function(d) { return d.dy; })
-        .style("fill", function(d) { return d.children ? color(d.data.name) : null; })
-        .attr('', function(d){
+        .style("fill", function(d) { 
             //TODO: Do this the right way....
             if(d.children && d.parent !== undefined){
                 MAP_GEN.treemap_cells.push(d);
             }
-        });
+            return d.children ? color(d.data.name) : null; }
+        );
 
     //-----------------------------------
     //FORCE CHART
@@ -916,17 +917,26 @@ MAP_GEN.functions.generate_voronoi_countries = function(){
 
     var h = $('#map')[0].offsetHeight;
     var w = $('#map')[0].offsetWidth;
+    var country_group = undefined;
 
     //Set vertices for each country of each continent
-    vertices = [];
+    vertices = {};
+    vertices_all = [];
+
     //TODO: Add points right outside the polygons so the voronoi diagram 
     //  doesn't get messed up?
     for(var continent in MAP_GEN._polygon_data){
         if(MAP_GEN._polygon_data.hasOwnProperty(continent)){
+            vertices[continent] = [];
             for(country in MAP_GEN._polygon_data[continent]){
                 if(MAP_GEN._polygon_data[continent].hasOwnProperty(country)){
                     //Add the polygon center point vertex to the vertices array
-                    vertices.push([
+                    vertices[continent].push([
+                        MAP_GEN._polygon_data[continent][country].x,
+                        MAP_GEN._polygon_data[continent][country].y
+                    ]);
+
+                    vertices_all.push([
                         MAP_GEN._polygon_data[continent][country].x,
                         MAP_GEN._polygon_data[continent][country].y
                     ]);
@@ -935,7 +945,7 @@ MAP_GEN.functions.generate_voronoi_countries = function(){
         }
     }
 
-    var country_group = MAP_GEN._svg.append('svg:g')
+    country_group = MAP_GEN._svg.append('svg:g')
         //OLD WAY: Apply a clip path to ONLY the entire voronoi diagram
         //NEW WAY: Apply a clip path to each voronoi path based on its
         //  parent continent.  See the code below
@@ -946,7 +956,7 @@ MAP_GEN.functions.generate_voronoi_countries = function(){
 
     //Add countries to the group
     country_group.selectAll(".country_border")
-        .data(d3.geom.voronoi(vertices))
+        .data(d3.geom.voronoi(vertices_all))
         .enter().append("svg:path")
             .attr("class", function(d, i) { 
                 return i ? "q" + (i % 9) + "-9 country_border" : "country_border"; 
