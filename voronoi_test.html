@@ -18,25 +18,48 @@
           return [Math.random() * w, Math.random() * h];
         });
 
+        var vertices_2 = d3.range(50).map(function(d) {
+          return [Math.random() * w, Math.random() * h];
+        });
+
         var svg = d3.select("#chart")
           .append("svg")
             .attr("width", w)
             .attr("height", h)
             .attr("class", "PiYG")
-            .on("mousemove", update);
+            //.on("mousemove", update);
 
-        svg.selectAll("path")
+        var diagram_1 = svg.append('g')
+            .attr('id', 'diagram_1');
+
+        diagram_1.selectAll("path")
             .data(d3.geom.voronoi(vertices))
           .enter().append("path")
             .attr("class", function(d, i) { return i ? "q" + (i % 9) + "-9" : null; })
             .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
 
-        svg.selectAll("circle")
+        var diagram_1_circles = svg.append('g')
+            .attr('id', 'diagram_1_circles');
+
+        diagram_1_circles.selectAll("circle")
             .data(vertices.slice(1))
           .enter().append("circle")
             .attr("transform", function(d) { return "translate(" + d + ")"; })
             .attr("r", 2);
 
+
+        // SECOND Voronoi Diagram
+        var diagram_2 = svg.append('g')
+            .attr('id', 'diagram_2');
+
+        diagram_2.selectAll("path")
+            .data(d3.geom.voronoi(vertices_2))
+          .enter().append("path")
+            .attr("class", function(d, i) { return i ? "q" + (i % 9) + "-9" : null; })
+            .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
+
+
+        /*
         function update() {
           vertices[0] = d3.svg.mouse(this);
           svg.selectAll("path")
@@ -45,6 +68,7 @@
               .filter(function(d) { return this.getAttribute("d") != d; })
               .attr("d", function(d) { return d; });
         }
+        */
     </script>
   </body> 
 </html> 
