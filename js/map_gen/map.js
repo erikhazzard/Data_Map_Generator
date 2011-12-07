@@ -5,6 +5,8 @@
  *
  * Function definition to generate the actual map
  *
+ * TODO: Scaling data
+ *
  * ======================================================================== */
 MAP_GEN.functions.generate_map = function( map_data ){
     //If no data object was passed in, use the MAP_GEN._data object
@@ -236,6 +238,9 @@ MAP_GEN.functions.generate_map = function( map_data ){
     //Create point for each country
     //
     //========================================================================
+    var x_pos = 0;
+    var y_pos = 0;
+    var country_radius = 0;
     for(var continent in MAP_GEN._data.children){
         if(MAP_GEN._data.children.hasOwnProperty(continent)){
             for(country in MAP_GEN._data.children[continent].children){
@@ -243,11 +248,25 @@ MAP_GEN.functions.generate_map = function( map_data ){
                     country)){
                     //Create points for each country
                     //TODO: Randomize position slightly
-                    var x_pos = MAP_GEN.treemap_cells[continent].children[ country].x 
+                    x_pos = MAP_GEN.treemap_cells[continent].children[ country].x 
                         + Math.random() * 1; 
-                    var y_pos = MAP_GEN.treemap_cells[continent].children[
+                    y_pos = MAP_GEN.treemap_cells[continent].children[
                         country].y
                         + Math.random() * 1;
+                    country_radius = MAP_GEN._data.children[
+                        continent].children[country].percentage * (
+                            //Multiply the percentage of each country by the
+                            //  average viewport size ( w + h / 2), and then
+                            //  divide that value so the radius isn't so big
+                            //NOTE:
+                            //  the last number is a scaling factor. The 
+                            //  smaller the factor, the larger the country
+                            //  circles will be
+                            (w + (h / 2)) / force_diagram_country_scale
+                        );
+                    if(country_radius < 3){
+                        country_radius = 3;
+                    }
 
                     var node = {
                         //---------------
@@ -258,17 +277,7 @@ MAP_GEN.functions.generate_map = function( map_data ){
                         //  so they are still porportional, but small ones don't
                         //  get too distorted by large data
                         //Set radius based on country percentage of total data
-                        radius: MAP_GEN._data.children[
-                            continent].children[country].percentage * (
-                                //Multiply the percentage of each country by the
-                                //  average viewport size ( w + h / 2), and then
-                                //  divide that value so the radius isn't so big
-                                //NOTE:
-                                //  the last number is a scaling factor. The 
-                                //  smaller the factor, the larger the country
-                                //  circles will be
-                                (w + (h / 2)) / force_diagram_country_scale
-                            ),
+                        radius: country_radius,
                         type: continent,
                         x: x_pos,
                         y: y_pos,
@@ -909,6 +918,17 @@ MAP_GEN.functions.generate_jagged_continent_borders = function(d,
  * ======================================================================== */
 MAP_GEN.functions.generate_voronoi_countries = function(){
     //TODO: Do a voronoi diagram for EACH continent, not just a single diagram
+    //
+    /*This is how we would scale it
+    .attr('transform', function(d,i){
+        console.log(MAP_GEN.treemap_cells[i]);
+        ret = 'translate(' 
+            + (-d[0][0] * (.8 - 1)) + ', ' 
+            + (-d[0][1] * (.8 - 1)) 
+            + ') scale(.8)';
+        return ret;
+    })
+    */
     //
     //Show status update
     MAP_GEN.functions.console_log('Drawing voronoi diagram for countries');

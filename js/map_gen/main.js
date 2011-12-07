@@ -36,6 +36,7 @@ MAP_GEN = {
 
     //Functions
     functions: {
+        //Data related
         //Skeleton definition for get_data function.
         //  Takes in a file name and calculates total percentages
         //      for continents and countries.  Sets the _data object
@@ -44,6 +45,10 @@ MAP_GEN = {
             data = undefined;
             return data;
         },
+        data_convert_from_json: function(json_res){},
+        data_convert_from_csv: function(json_res){},
+
+        //Map Related
         generate_map: function(map_data){
             //This function does all the heavy duty of generating the map
             //  defined in generate_map.js
@@ -85,9 +90,9 @@ MAP_GEN = {
         //  How big to scale the country circles.  
         //  Smaller scale = larger circles
         //  (Note: This also sort of depends on the data.  
-        //  The bigger the data set, the smaller the scale should
+        //  The bigger the data set, the bigger the scale should
         //  be)
-        force_diagram_country_scale: 2.1,
+        force_diagram_country_scale: 1.8,
 
         //Convex hull generation config
         convex_hull_randomize_points: function(){
@@ -144,6 +149,9 @@ $(document).ready(function(){
     MAP_GEN.functions.generate_data_and_map({
         directory: 'data/',
         file_name: 'dataset.json'
+
+        //file_name: 'site_traffic.csv'
+        //,data_conversion_func: MAP_GEN.functions.data_convert_from_csv
     });
 
     $(window).resize(function(){
