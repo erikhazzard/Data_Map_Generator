@@ -5,7 +5,7 @@
  *
  * Function definition to generate the actual map
  *
- * TODO: Scaling data
+ * TODO: Scaling countries
  *
  * ======================================================================== */
 MAP_GEN.functions.generate_map = function( map_data ){
