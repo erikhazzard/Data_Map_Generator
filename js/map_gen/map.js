@@ -45,7 +45,7 @@ MAP_GEN.functions.generate_map = function( map_data ){
     //
     //Get Treemap of data so we know starting positions for continents
     //-----------------------------------
-    var treemap = d3.layout.treemap().padding(4)
+    var treemap = d3.layout.treemap()
         .size([w, h])
         .value(function(d) { return d.size; });
 
@@ -76,6 +76,47 @@ MAP_GEN.functions.generate_map = function( map_data ){
             }
             return d.children ? color(d.data.name) : null; }
         );
+
+        var country_voronoi = [];
+        /*
+        for(continent in MAP_GEN.treemap_cells){
+            if(MAP_GEN.treemap_cells.hasOwnProperty(continent)){
+
+                for(country in MAP_GEN.treemap_cells[continent].children){
+                    if(MAP_GEN.treemap_cells[continent].children.hasOwnProperty(country)){
+                        console.log(MAP_GEN.treemap_cells[continent].children[country]);
+                        country_voronoi.push(
+                            [MAP_GEN.treemap_cells[continent].children[country].x,
+                            MAP_GEN.treemap_cells[continent].children[country].y]
+                        );
+                    }
+                }
+
+            }
+        }
+        */
+
+        var continent = 1;
+        for(country in MAP_GEN.treemap_cells[continent].children){
+            if(MAP_GEN.treemap_cells[continent].children.hasOwnProperty(country)){
+                console.log(MAP_GEN.treemap_cells[continent].children[country]);
+                country_voronoi.push(
+                    [MAP_GEN.treemap_cells[continent].children[country].x,
+                    MAP_GEN.treemap_cells[continent].children[country].y]
+                );
+            }
+        }
+
+        console.log(country_voronoi);
+        // SECOND Voronoi Diagram
+        var diagram_2 = svg.append('g')
+            .attr('id', 'diagram_2');
+
+        diagram_2.selectAll("path")
+            .data(d3.geom.voronoi(country_voronoi))
+          .enter().append("path")
+            .attr("opacity", '.6')
+            .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
 
     //-----------------------------------
     //FORCE CHART

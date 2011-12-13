@@ -11,16 +11,25 @@
   <body> 
     <div id="chart"></div> 
     <script>
-        var w = 960,
-        h = 500;
+        var w = 400,
+        h = 400;
 
         var vertices = d3.range(100).map(function(d) {
           return [Math.random() * w, Math.random() * h];
         });
 
-        var vertices_2 = d3.range(50).map(function(d) {
-          return [Math.random() * w, Math.random() * h];
-        });
+        var vertices_2 = [
+            [50,50],
+            [50,150],
+            [50,250],
+            [50,350],
+
+            [150,133],
+            [150,266],
+            [150,399],
+
+            [350,250],
+        ];
 
         var svg = d3.select("#chart")
           .append("svg")
