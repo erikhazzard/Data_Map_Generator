@@ -96,12 +96,12 @@ MAP_GEN = {
 
         //Convex hull generation config
         convex_hull_randomize_points: function(){
-            return -35 + Math.random() * 70;
+            return -15 + Math.random() * 30;
         },
         //  A distance factor of 1 will pretty much completely cover
         //  the entire continent, but may be 'too much' and cause
         //  overlaps for nearby continents
-        convex_hull_distance_factor: 1.2,
+        convex_hull_distance_factor: 1.3,
 
         //-------------------------------
         //Jagged boreder config

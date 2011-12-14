@@ -77,47 +77,6 @@ MAP_GEN.functions.generate_map = function( map_data ){
             return d.children ? color(d.data.name) : null; }
         );
 
-        var country_voronoi = [];
-        /*
-        for(continent in MAP_GEN.treemap_cells){
-            if(MAP_GEN.treemap_cells.hasOwnProperty(continent)){
-
-                for(country in MAP_GEN.treemap_cells[continent].children){
-                    if(MAP_GEN.treemap_cells[continent].children.hasOwnProperty(country)){
-                        console.log(MAP_GEN.treemap_cells[continent].children[country]);
-                        country_voronoi.push(
-                            [MAP_GEN.treemap_cells[continent].children[country].x,
-                            MAP_GEN.treemap_cells[continent].children[country].y]
-                        );
-                    }
-                }
-
-            }
-        }
-        */
-
-        var continent = 1;
-        for(country in MAP_GEN.treemap_cells[continent].children){
-            if(MAP_GEN.treemap_cells[continent].children.hasOwnProperty(country)){
-                console.log(MAP_GEN.treemap_cells[continent].children[country]);
-                country_voronoi.push(
-                    [MAP_GEN.treemap_cells[continent].children[country].x,
-                    MAP_GEN.treemap_cells[continent].children[country].y]
-                );
-            }
-        }
-
-        console.log(country_voronoi);
-        // SECOND Voronoi Diagram
-        var diagram_2 = svg.append('g')
-            .attr('id', 'diagram_2');
-
-        diagram_2.selectAll("path")
-            .data(d3.geom.voronoi(country_voronoi))
-          .enter().append("path")
-            .attr("opacity", '.6')
-            .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
-
     //-----------------------------------
     //FORCE CHART
     //
@@ -159,8 +118,8 @@ MAP_GEN.functions.generate_map = function( map_data ){
             
             //Set x,y to the tree map position
             //  Base in center of treemap, but randomize a bit
-            x: (cur_cell.x + (cur_cell.dx / 2)) + random_factor_x,
-            y: (cur_cell.y + (cur_cell.dy / 2)) + random_factor_y
+            x: (cur_cell.x + (cur_cell.dx / 2)), //+ random_factor_x,
+            y: (cur_cell.y + (cur_cell.dy / 2)) //+ random_factor_y
         };
     });
 
@@ -508,16 +467,13 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
             //========================================================================
             //Setup jagged borders based on convex hull of points created above
             //========================================================================
-            //TODO: FIX THIS ISN'T WORKING
             //Now we've created the continent vertices, we'll need to
             //  loop each country in the continent again to set up the
             //  clip path
             for(j in MAP_GEN._polygon_data[i]){
                 if(MAP_GEN._polygon_data[i].hasOwnProperty(j)){
-                    //TODO: Add a path thats not a clip path, turn the attr('d') to a 
-                    //  reusable function and use it to generate a polygon (for the stroke)
-                    //Create the clipping path, which will limit the voronoi
-                    //  diagram drawn later
+                    //Create the clipping path using convex hull, which will 
+                    // limit the voronoi diagram drawn later
                     continent_group_clip_array[clip_index_count].selectAll(
                         "path" + clip_index_count)
                         .data([d3.geom.hull(single_continent_vertices)])
@@ -1038,20 +994,71 @@ MAP_GEN.functions.generate_voronoi_countries = function(){
 
                     //Randomize the borders a little bit.
                     //Push a point in between this index and the next
-                    /*
-                    if(i + 1 !== d_length){
-                        data_points.push([
-                            //push x
-                            ((d[i][0] + d[i+1][0]) / 2) + 2,
-                            //push y
-                            ((d[i][1] + d[i+1][1]) / 2) + 2
-                        ]);
-                    }
-                    */
+                    // if(i + 1 !== d_length){
+                    //     data_points.push([
+                    //         //push x
+                    //         ((d[i][0] + d[i+1][0]) / 2) + 2,
+                    //         //push y
+                    //         ((d[i][1] + d[i+1][1]) / 2) + 2
+                    //     ]);
+                    // }
                 }
 
                 return "M" + data_points.join("L") + "Z"; 
             });
+    console.log(vertices);
+    
+    /* DOESNT WORK Yet
+    for(continent in MAP_GEN._data.children){
+        console.log(continent);
+        country_group = MAP_GEN._svg.append('svg:g')
+            //OLD WAY: Apply a clip path to ONLY the entire voronoi diagram
+            //NEW WAY: Apply a clip path to each voronoi path based on its
+            //  parent continent.  See the code below
+            //NOTE: We'll still need to apply a clipping path to the entire
+            //  diagram 
+            //.attr('clip-path', 'url(#continent_borders_clip)')
+            .attr('id', 'country_borders_group');
+
+        //Add countries to the group
+        country_group.selectAll(".country_border")
+            .data(d3.geom.voronoi(vertices[continent]))
+            .enter().append("svg:path")
+                .attr("class", function(d, i) { 
+                    return i ? "q" + (i % 9) + "-9 country_border" : "country_border"; 
+                })
+                .attr('clip-path', function(d,i){
+                    return "url(#continent_borders_clip_" + i + ")";
+                })
+                .attr('id', function(d,i){
+                    return 'country_voronoi_' + i;
+                })
+                .attr("d", function(d) { 
+                    // d contains an array of points
+                    //  so let's just add some new points in between each set
+                    var data_points = [];
+                    var d_length=d.length;
+
+                    for(var i=0; i<d_length; i++){
+                        //Push the first point
+                        data_points.push(d[i]);
+
+                        //Randomize the borders a little bit.
+                        //Push a point in between this index and the next
+                        // if(i + 1 !== d_length){
+                        //     data_points.push([
+                        //         //push x
+                        //         ((d[i][0] + d[i+1][0]) / 2) + 2,
+                        //         //push y
+                        //         ((d[i][1] + d[i+1][1]) / 2) + 2
+                        //     ]);
+                        // }
+                    }
+
+                    return "M" + data_points.join("L") + "Z"; 
+                });
+    }
+    */
 
     MAP_GEN.functions.console_log('Completed drawing map!', true); 
 
@@ -1063,5 +1070,61 @@ MAP_GEN.functions.generate_voronoi_countries = function(){
              .style('fill', '#336699')
              .style('stroke', '#000000')
              .attr('d', '')
+    */
+
+    /* Generating voronoi diagrams for each continent / country 
+
+        var country_voronoi = [];
+        for(continent in MAP_GEN.treemap_cells){
+            if(MAP_GEN.treemap_cells.hasOwnProperty(continent)){
+
+                for(country in MAP_GEN.treemap_cells[continent].children){
+                    if(MAP_GEN.treemap_cells[continent].children.hasOwnProperty(country)){
+                        console.log(MAP_GEN.treemap_cells[continent].children[country]);
+                        country_voronoi.push(
+                            [MAP_GEN.treemap_cells[continent].children[country].x +
+                                MAP_GEN.treemap_cells[continent].children[country].dx / 2,
+                            MAP_GEN.treemap_cells[continent].children[country].y +
+                                MAP_GEN.treemap_cells[continent].children[country].dy / 2]
+                        );
+                    }
+                }
+
+            }
+        }
+
+
+        // SECOND Voronoi Diagram
+        var diagram_2 = svg.append('g')
+            .attr('id', 'diagram_2');
+
+        diagram_2.selectAll("path")
+            .data(d3.geom.voronoi(country_voronoi))
+          .enter().append("path")
+            .attr("opacity", '.6')
+            .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
+
+        // THIRD Voronoi Diagram
+        continent_voronoi = [];
+        for(continent in MAP_GEN.treemap_cells){
+            if(MAP_GEN.treemap_cells.hasOwnProperty(continent)){
+                continent_voronoi.push(
+                    [
+                        MAP_GEN.treemap_cells[continent].x +
+                            MAP_GEN.treemap_cells[continent].dx / 2,
+                        MAP_GEN.treemap_cells[continent].y + 
+                            MAP_GEN.treemap_cells[continent].dy / 2
+                    ]
+                );
+            }
+        }
+        var diagram_3 = svg.append('g')
+            .attr('id', 'diagram_3');
+
+        diagram_3.selectAll("path")
+            .data(d3.geom.voronoi(continent_voronoi))
+          .enter().append("path")
+            .attr("opacity", '.6')
+            .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
     */
 }
