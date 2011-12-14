@@ -29,7 +29,13 @@ MAP_GEN = {
         }
     },
 
-    _polygon_data: {},
+    //Array of arrays of verticies for each continent
+    continent_vertices: [],
+        //Continent 1: 
+        //  [ [x1,y1], [x2, y1], [x2, y2], [x1,y2] ],
+        
+    //Array of arrays of vertices for countries
+    country_vertices: [],
 
     //Reference to SVG element
     _svg: undefined,
