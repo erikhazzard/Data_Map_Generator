@@ -317,6 +317,9 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
     MAP_GEN.country_vertices = country_vertices;
     MAP_GEN.continent_vertices = continent_vertices;
 
+    //Generate Countries (voronoi diagrams)
+    MAP_GEN.functions.generate_voronoi_countries();
+
 }
 
 /* ========================================================================    
