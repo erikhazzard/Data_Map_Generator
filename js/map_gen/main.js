@@ -92,13 +92,9 @@ MAP_GEN = {
     },
 
     config: {
-        //Force Diagram config
-        //  How big to scale the country circles.  
-        //  Smaller scale = larger circles
-        //  (Note: This also sort of depends on the data.  
-        //  The bigger the data set, the bigger the scale should
-        //  be)
-        force_diagram_country_scale: 1.8,
+        //  How big to scale the country and continents
+        //  Smaller scale = smaller countries and continents
+        scaling_factor: .75,
 
         //Convex hull generation config
         convex_hull_randomize_points: function(){

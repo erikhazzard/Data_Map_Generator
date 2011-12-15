@@ -35,9 +35,6 @@ MAP_GEN.functions.generate_map = function( map_data ){
     //Show a status update
     MAP_GEN.functions.console_log('Creating treemap');
 
-    //How big to scale the country circles.  Smaller scale = larger circles
-    var force_diagram_country_scale = MAP_GEN.config.force_diagram_country_scale;
-
     //-----------------------------------
     //TREEMAP
     //
@@ -62,7 +59,8 @@ MAP_GEN.functions.generate_map = function( map_data ){
         .data(treemap)
         .enter().append("svg:g")
             .attr("class", "cell")
-            .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+            .attr("transform", function(d) { 
+                return "translate(" + d.x + "," + d.y + ")"; });
 
     cell.append("svg:rect")
         .attr("width", function(d) { return d.dx; })
@@ -105,12 +103,23 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
     var temp_continent = {};
 
     //Country_vertices will be an array of arrays of country vertices
-    //NOTE: not really used yet
+    //  the format is:
+    //      
     var country_vertices = [ ];
     var temp_country = {};
 
+    //temp_country_vertices is used to store all the vertices for all the
+    //  countries for an invidual continent
+    //  The format is:
+    //      [ [ [x1,y1][x2,y2],... ], [ ... ], ... ]
+    //      Where x1,y1, etc. are ALL the vertices for that country
+    var country_vertices_combined = [];
+
     //Reference for cells
     var cell_left, cell_right, cell_top, cell_bottom;
+
+    //Reference to scaling factor (sizes countries / continents)
+    var scaling_factor = MAP_GEN.config.scaling_factor;
 
     //Function we'll use to return a 'randomized' coordinate
     function randomize_vertex(vertex, randomize_func){
@@ -137,7 +146,7 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
 
     //Create a group for the continent polygons
     var continent_border_polygon = MAP_GEN._svg.append('svg:g')
-        .attr('id', 'continent_borders_polygon');
+        .attr('id', 'continent_border_polygons');
 
     //-----------------------------------
     //
@@ -147,30 +156,42 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
     //Setup continent vertices based on polygon data of each country
     for(continent in MAP_GEN.treemap_cells){
         if(MAP_GEN.treemap_cells.hasOwnProperty(continent)){
+            //TODO: Is this continent stuff necessary? Convex hull
+            //  could be generated from aggreate of country borders
             //Store a reference to the current continent cell
             temp_continent = MAP_GEN.treemap_cells[continent];
-
+            //Get cell positions
+            cell_left = temp_continent.x * scaling_factor;
+            cell_top = temp_continent.y * scaling_factor;
+            cell_right = ((temp_continent.x + (temp_continent.dx))
+                * scaling_factor);
+            cell_bottom = ((temp_continent.y + (temp_continent.dy))
+                * scaling_factor);
+            
             //Reset temp_continent vertices
             continent_vertices.push([
                 //top left
-                [ temp_continent.x, 
-                    temp_continent.y ],
+                [ cell_left,
+                    cell_top ],
                 //top right
-                [ temp_continent.x + (temp_continent.dx), 
-                    temp_continent.y],
+                [ cell_right,
+                    cell_top],
                 //bottom right 
-                [ temp_continent.x + (temp_continent.dx),
-                    temp_continent.y + (temp_continent.dy)
+                [ cell_right,
+                    cell_bottom
                 ],
                 //bottom left 
-                [ temp_continent.x, 
-                    temp_continent.y + (temp_continent.dy),
+                [ cell_left,
+                    cell_bottom
                 ],
             ]);
 
             //Add an empty array for the current array of countries
             //  for this continent
             country_vertices.push([]);
+            //Do the same thing for country_vertices_combined
+            country_vertices_combined.push([]);
+
             //Go through each country and add to single_continent_vertices
             //-----------------------------------
             for(country in MAP_GEN.treemap_cells[continent].children){
@@ -181,10 +202,18 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
                         continent].children[country]; 
 
                     //Store x / y / width / height
+                    //TODO: Scale here? Or scale in polygon gen...
+                    cell_left = temp_country.x * scaling_factor;
+                    cell_top = temp_country.y * scaling_factor;
+                    cell_right = temp_country.x + ((temp_country.dx)
+                        * scaling_factor);
+                    cell_bottom = temp_country.y + ((temp_country.dy)
+                        * scaling_factor);
+                    
                     cell_left = temp_country.x;
                     cell_top = temp_country.y;
-                    cell_right = temp_country.x + (temp_country.dx);
-                    cell_bottom = temp_country.y + (temp_country.dy);
+                    cell_right = temp_country.x + temp_country.dx;
+                    cell_bottom = temp_country.y + temp_country.dy;
 
                     //Setup a random factor which will allow us to create a bounding
                     //  box that doesn't look exactly like a square every time
@@ -199,33 +228,95 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
                     top_left = [
                         cell_left,
                         cell_top];
+                    top_left = randomize_vertex(top_left);
 
                     top_right = [
                         cell_right,
                         cell_top];
+                    top_right = randomize_vertex(top_right);
 
                     bottom_right = [
                         cell_right,
                         cell_bottom];
+                    bottom_right = randomize_vertex(bottom_right);
+                    
                     bottom_left = [
                         cell_left,
                         cell_bottom];
+                    bottom_left = randomize_vertex(bottom_left);
 
                     //Push vertices to the country_vertices array
                     country_vertices[country_vertices.length-1].push([
-                        randomize_vertex(top_left),
-                        randomize_vertex(top_right),
-                        randomize_vertex(bottom_right),
-                        randomize_vertex(bottom_left)
+                        top_left,
+                        top_right,
+                        bottom_right,
+                        bottom_left
                     ]);
+
+                    //Add to the country_vertices_combined array
+                    country_vertices_combined[
+                        country_vertices_combined.length-1].push(
+                            top_left 
+                        );
+                    country_vertices_combined[
+                        country_vertices_combined.length-1].push(
+                            top_right
+                        );
+                    country_vertices_combined[
+                        country_vertices_combined.length-1].push(
+                            bottom_right 
+                        );
+                    country_vertices_combined[
+                        country_vertices_combined.length-1].push(
+                            bottom_left
+                        );
                 }
             }
+
+            //Create a CONTINENT polygon based on the convex hull based
+            //  on the points from each country
+            continent_border_polygon.selectAll('path_' + continent)
+                .data([d3.geom.hull(
+                    country_vertices_combined[
+                        country_vertices_combined.length-1
+                    ]
+                    //Works - Continent vertices
+                    //continent_vertices[
+                    //continent_vertices.length-1]
+                )])
+                .enter().append("svg:path")
+                .attr('id', function(d){
+                    return 'continent_border_polygon_' + continent
+                })
+                .attr('class', 'continent_border_polygon')
+                .attr('transform', function(d){
+                    //scale it
+                    var cur_continent = MAP_GEN.treemap_cells[continent];
+                    //GET CENTER X
+                    var center_x = cur_continent.x + (cur_continent.dx/2);
+                    //GET CENTER Y
+                    var center_y = cur_continent.y + (cur_continent.dy/2);
+                    ret = 'translate(' 
+                        + (-center_x * (scaling_factor - 1)) + ', ' 
+                        + (-center_y * (scaling_factor - 1)) 
+                        + ') scale(' + scaling_factor + ')';
+                    return ret;
+                })
+                .attr("d", function(d) { 
+                    //Set the country key to be a combination of i 
+                    // and j
+                    //  i is the current continent key 
+                    return MAP_GEN.functions.generate_jagged_continent_borders(
+                        d,
+                        continent);
+            });
         }
     }
 
     //Store a global reference to them
     MAP_GEN.country_vertices = country_vertices;
     MAP_GEN.continent_vertices = continent_vertices;
+
 }
 
 /* ========================================================================    
@@ -679,7 +770,6 @@ MAP_GEN.functions.generate_voronoi_countries = function(){
 
                 return "M" + data_points.join("L") + "Z"; 
             });
-    console.log(vertices);
     
     /* DOESNT WORK Yet
     for(continent in MAP_GEN._data.children){
