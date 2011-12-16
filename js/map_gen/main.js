@@ -37,6 +37,12 @@ MAP_GEN = {
     //Array of arrays of vertices for countries
     country_vertices: [],
 
+    //Array of center points for each country
+    country_center_points: [
+        //Grouped by continent:
+        //  [ [x1,y1], [x2,y2], ... ], ...
+    ],
+
     //Reference to SVG element
     _svg: undefined,
 
@@ -65,6 +71,9 @@ MAP_GEN = {
         },
         generate_voronoi_countries: function(){
             //Function that creates a voronoi diagram for country borders
+        },
+        scale_continents: function(){
+            //Function that gets called at end which scales the continents
         },
         console_log: function(message, hide_loading_bar){
             if(hide_loading_bar === undefined){

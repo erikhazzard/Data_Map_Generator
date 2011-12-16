@@ -39,7 +39,6 @@ MAP_GEN.functions.generate_data_and_map = function(params){
     var d3_data;
     //They could pass in a csv, but assume a json
     var data_type = 'json';
-    console.log(file_name);
     if(file_name.search(/\.csv/gi) !== -1){
         data_type = 'script';
     }
@@ -230,7 +229,6 @@ MAP_GEN.functions.data_convert_from_csv = function(data_res){
         if(isNaN(cur_value) === true){
             cur_value = 0;
         }
-        console.log(cur_value);
         
 
         //Set up the empty 'parent' (continent) node
@@ -255,7 +253,6 @@ MAP_GEN.functions.data_convert_from_csv = function(data_res){
         total_values_combined += cur_value;
     }
 
-    console.log(temp_data);
 
     //---------------------------
     //Convert to d3 json string

@@ -114,6 +114,9 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
     //      [ [ [x1,y1][x2,y2],... ], [ ... ], ... ]
     //      Where x1,y1, etc. are ALL the vertices for that country
     var country_vertices_combined = [];
+    //Local country center points variable, will contain center points
+    //  for all countries, MAP_GEN global var is set at end of loop
+    var country_center_points = [];
 
     //Reference for cells
     var cell_left, cell_right, cell_top, cell_bottom;
@@ -135,18 +138,26 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
     }
 
     //Variables to use when creating country vertices
+    //  ephemeral variables, get overwritten each loop iteration
     var top_left, top_right,
         bottom_left, bottom_right;
 
-    var random_factor = undefined;
+    //Random factor and country key, used to generate jagged lines
+    //Setup a random factor which will allow us to create a bounding
+    //  box that doesn't look exactly like a square every time
+    var random_factor = MAP_GEN.config.convex_hull_randomize_points;
     var country_key = undefined;
 
+    //SVG border group element
     var continent_group_border = MAP_GEN._svg.append('svg:g')
         .attr('id', 'continent_borders_group');
 
     //Create a group for the continent polygons
     var continent_border_polygon = MAP_GEN._svg.append('svg:g')
         .attr('id', 'continent_border_polygons');
+    //Used to store a reference to each continent group which contains
+    //  a polygon and clip path
+    var continent_polygon_clip_group = undefined;
 
     //-----------------------------------
     //
@@ -160,6 +171,7 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
             //  could be generated from aggreate of country borders
             //Store a reference to the current continent cell
             temp_continent = MAP_GEN.treemap_cells[continent];
+
             //Get cell positions
             cell_left = temp_continent.x * scaling_factor;
             cell_top = temp_continent.y * scaling_factor;
@@ -191,7 +203,13 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
             country_vertices.push([]);
             //Do the same thing for country_vertices_combined
             country_vertices_combined.push([]);
+            //And for the center poitnts
+            country_center_points.push([]);
+            //Add a group for each continent
+            continent_polygon_clip_group = continent_border_polygon.append('g')
+                .attr('id', 'continent_group_' + continent);
 
+            //-----------------------------------
             //Go through each country and add to single_continent_vertices
             //-----------------------------------
             for(country in MAP_GEN.treemap_cells[continent].children){
@@ -215,16 +233,30 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
                     cell_right = temp_country.x + temp_country.dx;
                     cell_bottom = temp_country.y + temp_country.dy;
 
-                    //Setup a random factor which will allow us to create a bounding
-                    //  box that doesn't look exactly like a square every time
-                    random_factor = MAP_GEN.config.convex_hull_randomize_points;
+                    //Push the center point of this country to the 
+                    //  country_center_points array
+                    country_center_points[country_center_points.length-1].push(
+                        [temp_country.x + (temp_country.dx / 2),
+                        temp_country.y + (temp_country.dy / 2)]
+                    );
                     
                     //Now, turn temp_country into an array which will hold our 
                     //  vertices
                     temp_country = [];
 
+                    //-------------------
+                    //Create bounding box for continent
+                    //  "box" should be turned into something that doesn't 
+                    //  look so square, man
+                    //-------------------
                     //TODO: Create multiple vertices to avoid square edges
                     //Set up vertices
+                    /*
+                    cell_left = (-Math.abs(
+                        (cell_left - (cell_left * scaling_factor))/2)
+                        + Math.random() * (cell_left - (cell_left 
+                            * scaling_factor)));
+                    */
                     top_left = [
                         cell_left,
                         cell_top];
@@ -275,33 +307,42 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
 
             //Create a CONTINENT polygon based on the convex hull based
             //  on the points from each country
-            continent_border_polygon.selectAll('path_' + continent)
+            continent_polygon_clip_group.selectAll('path_' + continent)
                 .data([d3.geom.hull(
                     country_vertices_combined[
                         country_vertices_combined.length-1
                     ]
-                    //Works - Continent vertices
-                    //continent_vertices[
-                    //continent_vertices.length-1]
                 )])
                 .enter().append("svg:path")
                 .attr('id', function(d){
                     return 'continent_border_polygon_' + continent
                 })
                 .attr('class', 'continent_border_polygon')
-                .attr('transform', function(d){
-                    //scale it
-                    var cur_continent = MAP_GEN.treemap_cells[continent];
-                    //GET CENTER X
-                    var center_x = cur_continent.x + (cur_continent.dx/2);
-                    //GET CENTER Y
-                    var center_y = cur_continent.y + (cur_continent.dy/2);
-                    ret = 'translate(' 
-                        + (-center_x * (scaling_factor - 1)) + ', ' 
-                        + (-center_y * (scaling_factor - 1)) 
-                        + ') scale(' + scaling_factor + ')';
-                    return ret;
+                .attr("d", function(d) { 
+                    //Set the country key to be a combination of i 
+                    // and j
+                    //  i is the current continent key 
+                    return MAP_GEN.functions.generate_jagged_continent_borders(
+                        d,
+                        continent);
+            });
+
+            //Create clipping path (for voronoi diagram)
+            continent_clip_path = continent_polygon_clip_group.append(
+                'svg:clipPath')
+                .attr('id', 'continent_border_clip_path_' + continent);
+
+            continent_clip_path.selectAll('path_' + continent)
+                .data([d3.geom.hull(
+                    country_vertices_combined[
+                        country_vertices_combined.length-1
+                    ]
+                )])
+                .enter().append("svg:path")
+                .attr('id', function(d){
+                    return 'continent_border_clip_path_path' + continent
                 })
+                .attr('class', 'continent_border_clip_path')
                 .attr("d", function(d) { 
                     //Set the country key to be a combination of i 
                     // and j
@@ -316,7 +357,9 @@ MAP_GEN.functions.generate_continent_convex_hulls = function(){
     //Store a global reference to them
     MAP_GEN.country_vertices = country_vertices;
     MAP_GEN.continent_vertices = continent_vertices;
+    MAP_GEN.country_center_points = country_center_points;
 
+    
     //Generate Countries (voronoi diagrams)
     MAP_GEN.functions.generate_voronoi_countries();
 
@@ -682,215 +725,102 @@ MAP_GEN.functions.generate_jagged_continent_borders = function(d,
  * ======================================================================== */
 MAP_GEN.functions.generate_voronoi_countries = function(){
     //TODO: Do a voronoi diagram for EACH continent, not just a single diagram
-    //
-    /*This is how we would scale it
-    .attr('transform', function(d,i){
-        console.log(MAP_GEN.treemap_cells[i]);
-        ret = 'translate(' 
-            + (-d[0][0] * (.8 - 1)) + ', ' 
-            + (-d[0][1] * (.8 - 1)) 
-            + ') scale(.8)';
-        return ret;
-    })
-    */
-    //
     //Show status update
     MAP_GEN.functions.console_log('Drawing voronoi diagram for countries');
 
     var h = $('#map')[0].offsetHeight;
     var w = $('#map')[0].offsetWidth;
-    var country_group = undefined;
+    var continent_group = undefined;
+    var continent;
 
-    //Set vertices for each country of each continent
-    vertices = {};
-    vertices_all = [];
+    //country_group = MAP_GEN._svg.append('svg:g')
+    //    .attr('id', 'country_borders_groups');
 
-    //TODO: Add points right outside the polygons so the voronoi diagram 
-    //  doesn't get messed up?
-    for(var continent in MAP_GEN._polygon_data){
-        if(MAP_GEN._polygon_data.hasOwnProperty(continent)){
-            vertices[continent] = [];
-            for(country in MAP_GEN._polygon_data[continent]){
-                if(MAP_GEN._polygon_data[continent].hasOwnProperty(country)){
-                    //Add the polygon center point vertex to the vertices array
-                    vertices[continent].push([
-                        MAP_GEN._polygon_data[continent][country].x,
-                        MAP_GEN._polygon_data[continent][country].y
-                    ]);
+    for(continent in MAP_GEN.country_center_points){
+        if(MAP_GEN.country_center_points.hasOwnProperty(continent)){
+            continent_group = MAP_GEN._svg.selectAll('#continent_group_' 
+                + continent);
+            //Add countries to the group
+            continent_group.append('svg:g')
+                .attr('id', 'contry_border_groups_' + continent)
+                .attr('class', 'country_border_group')
+            .selectAll(".country_border")
+                .data(d3.geom.voronoi(MAP_GEN.country_center_points[continent]))
+                .enter().append("svg:path")
+                    .attr('class', 'country_border_path')
+                    .attr('clip-path', function(d,i){
+                        return "url(#continent_border_clip_path_" + continent + ")";
+                    })
+                    .attr('id', function(d,i){
+                        return 'country_voronoi_' + continent + '_' + i;
+                    })
+                    .attr("d", function(d) { 
+                        // d contains an array of points
+                        //  so let's just add some new points in between each set
+                        var data_points = [];
+                        var d_length=d.length;
 
-                    vertices_all.push([
-                        MAP_GEN._polygon_data[continent][country].x,
-                        MAP_GEN._polygon_data[continent][country].y
-                    ]);
-                }
+                        for(var i=0; i<d_length; i++){
+                            //Push the first point
+                            data_points.push(d[i]);
+
+                            //Randomize the borders a little bit.
+                            //Push a point in between this index and the next
+                            // if(i + 1 !== d_length){
+                            //     data_points.push([
+                            //         //push x
+                            //         ((d[i][0] + d[i+1][0]) / 2) + 2,
+                            //         //push y
+                            //         ((d[i][1] + d[i+1][1]) / 2) + 2
+                            //     ]);
+                            // }
+                        }
+
+                        if(data_points.length > 0){
+                            return "M" + data_points.join("L") + "Z"; 
+                        }else{
+                            //Create a square that extends past the map div
+                            data_points = [
+                                [-w, -h],
+                                [w*2, -h],
+                                [w*2, h*2],
+                                [-w, h*2]
+                            ];
+                        }
+                        return "M" + data_points.join("L") + "Z"; 
+                    });
             }
+        }
+
+    MAP_GEN.functions.scale_continents();
+}
+
+/* ========================================================================    
+ *
+ * generate_voronoi_countries()
+ *
+ * ======================================================================== */
+MAP_GEN.functions.scale_continents = function(){
+    var scaling_factor = MAP_GEN.config.scaling_factor;
+    var ret=undefined;
+    var continent; 
+
+    for(continent in MAP_GEN.treemap_cells){
+        if(MAP_GEN.treemap_cells.hasOwnProperty(continent)){
+            d3.select('#continent_group_' + continent)
+                .attr('transform', function(d){
+                    //scale it
+                    var cur_continent = MAP_GEN.treemap_cells[continent];
+                    //GET CENTER X
+                    var center_x = cur_continent.x + (cur_continent.dx/2);
+                    //GET CENTER Y
+                    var center_y = cur_continent.y + (cur_continent.dy/2);
+                    ret = 'translate(' 
+                        + (-center_x * (scaling_factor - 1)) + ', ' 
+                        + (-center_y * (scaling_factor - 1)) 
+                        + ') scale(' + scaling_factor + ')';
+                    return ret;
+                })
         }
     }
-
-    country_group = MAP_GEN._svg.append('svg:g')
-        //OLD WAY: Apply a clip path to ONLY the entire voronoi diagram
-        //NEW WAY: Apply a clip path to each voronoi path based on its
-        //  parent continent.  See the code below
-        //NOTE: We'll still need to apply a clipping path to the entire
-        //  diagram 
-        //.attr('clip-path', 'url(#continent_borders_clip)')
-        .attr('id', 'country_borders_group');
-
-    //Add countries to the group
-    country_group.selectAll(".country_border")
-        .data(d3.geom.voronoi(vertices_all))
-        .enter().append("svg:path")
-            .attr("class", function(d, i) { 
-                return i ? "q" + (i % 9) + "-9 country_border" : "country_border"; 
-            })
-            .attr('clip-path', function(d,i){
-                return "url(#continent_borders_clip_" + i + ")";
-            })
-            .attr('id', function(d,i){
-                return 'country_voronoi_' + i;
-            })
-            .attr("d", function(d) { 
-                // d contains an array of points
-                //  so let's just add some new points in between each set
-                var data_points = [];
-                var d_length=d.length;
-
-                for(var i=0; i<d_length; i++){
-                    //Push the first point
-                    data_points.push(d[i]);
-
-                    //Randomize the borders a little bit.
-                    //Push a point in between this index and the next
-                    // if(i + 1 !== d_length){
-                    //     data_points.push([
-                    //         //push x
-                    //         ((d[i][0] + d[i+1][0]) / 2) + 2,
-                    //         //push y
-                    //         ((d[i][1] + d[i+1][1]) / 2) + 2
-                    //     ]);
-                    // }
-                }
-
-                return "M" + data_points.join("L") + "Z"; 
-            });
-    
-    /* DOESNT WORK Yet
-    for(continent in MAP_GEN._data.children){
-        console.log(continent);
-        country_group = MAP_GEN._svg.append('svg:g')
-            //OLD WAY: Apply a clip path to ONLY the entire voronoi diagram
-            //NEW WAY: Apply a clip path to each voronoi path based on its
-            //  parent continent.  See the code below
-            //NOTE: We'll still need to apply a clipping path to the entire
-            //  diagram 
-            //.attr('clip-path', 'url(#continent_borders_clip)')
-            .attr('id', 'country_borders_group');
-
-        //Add countries to the group
-        country_group.selectAll(".country_border")
-            .data(d3.geom.voronoi(vertices[continent]))
-            .enter().append("svg:path")
-                .attr("class", function(d, i) { 
-                    return i ? "q" + (i % 9) + "-9 country_border" : "country_border"; 
-                })
-                .attr('clip-path', function(d,i){
-                    return "url(#continent_borders_clip_" + i + ")";
-                })
-                .attr('id', function(d,i){
-                    return 'country_voronoi_' + i;
-                })
-                .attr("d", function(d) { 
-                    // d contains an array of points
-                    //  so let's just add some new points in between each set
-                    var data_points = [];
-                    var d_length=d.length;
-
-                    for(var i=0; i<d_length; i++){
-                        //Push the first point
-                        data_points.push(d[i]);
-
-                        //Randomize the borders a little bit.
-                        //Push a point in between this index and the next
-                        // if(i + 1 !== d_length){
-                        //     data_points.push([
-                        //         //push x
-                        //         ((d[i][0] + d[i+1][0]) / 2) + 2,
-                        //         //push y
-                        //         ((d[i][1] + d[i+1][1]) / 2) + 2
-                        //     ]);
-                        // }
-                    }
-
-                    return "M" + data_points.join("L") + "Z"; 
-                });
-    }
-    */
-
-    MAP_GEN.functions.console_log('Completed drawing map!', true); 
-
-    //TESTING
-    /*
-    MAP_GEN._svg.selectAll('path')
-             .attr('d', '')
-         .append('svg:path')
-             .style('fill', '#336699')
-             .style('stroke', '#000000')
-             .attr('d', '')
-    */
-
-    /* Generating voronoi diagrams for each continent / country 
-
-        var country_voronoi = [];
-        for(continent in MAP_GEN.treemap_cells){
-            if(MAP_GEN.treemap_cells.hasOwnProperty(continent)){
-
-                for(country in MAP_GEN.treemap_cells[continent].children){
-                    if(MAP_GEN.treemap_cells[continent].children.hasOwnProperty(country)){
-                        console.log(MAP_GEN.treemap_cells[continent].children[country]);
-                        country_voronoi.push(
-                            [MAP_GEN.treemap_cells[continent].children[country].x +
-                                MAP_GEN.treemap_cells[continent].children[country].dx / 2,
-                            MAP_GEN.treemap_cells[continent].children[country].y +
-                                MAP_GEN.treemap_cells[continent].children[country].dy / 2]
-                        );
-                    }
-                }
-
-            }
-        }
-
-
-        // SECOND Voronoi Diagram
-        var diagram_2 = svg.append('g')
-            .attr('id', 'diagram_2');
-
-        diagram_2.selectAll("path")
-            .data(d3.geom.voronoi(country_voronoi))
-          .enter().append("path")
-            .attr("opacity", '.6')
-            .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
-
-        // THIRD Voronoi Diagram
-        continent_voronoi = [];
-        for(continent in MAP_GEN.treemap_cells){
-            if(MAP_GEN.treemap_cells.hasOwnProperty(continent)){
-                continent_voronoi.push(
-                    [
-                        MAP_GEN.treemap_cells[continent].x +
-                            MAP_GEN.treemap_cells[continent].dx / 2,
-                        MAP_GEN.treemap_cells[continent].y + 
-                            MAP_GEN.treemap_cells[continent].dy / 2
-                    ]
-                );
-            }
-        }
-        var diagram_3 = svg.append('g')
-            .attr('id', 'diagram_3');
-
-        diagram_3.selectAll("path")
-            .data(d3.geom.voronoi(continent_voronoi))
-          .enter().append("path")
-            .attr("opacity", '.6')
-            .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
-    */
 }
