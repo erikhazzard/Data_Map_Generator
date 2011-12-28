@@ -213,18 +213,47 @@ path {
     stroke: #463F30;
     stroke-width:6px;
 }
-#continent_border_polygons path {
+.continent_border_polygon {
     fill: #A89263;
-    stroke: #807150;
+    stroke: #624B22;
     stroke-width:6px;
 }
+    .continent_border_polygon_outline_1,
+    .continent_border_polygon_outline_2,
+    .continent_border_polygon_outline_3,
+    .continent_border_polygon_outline_4 {
+        fill:none;
+        fill: rgba(201,188,160,.3);
+        stroke: rgba(128,113,80,.4);
+        /*
+        stroke-dasharray: 1,2;
+        */
+        stroke-width:1px;
+    }
+    /*Override stroke color*/
+    .continent_border_polygon_outline_1 {
+    }
+    .continent_border_polygon_outline_2 {
+    }
+    .continent_border_polygon_outline_3 {
+        stroke: none;
+    }
+    .continent_border_polygon_outline_4 {
+    }
 /* Country borders */
 
 .country_border_group path {
     fill: #A89263 !important;
     fill-opacity: .6 !important;
     stroke: #807150 !important;
-    stroke-width:3px !important;
+    stroke-width:4px !important;
+}
+.country_label_text {
+    fill: rgba(58,43,10,.9) !important;
+    font-size:1.6em;
+    font-variant: small-caps;
+    font-weight:bold;
+    text-shadow:0 0 15px rgba(255,255,255,.9) ; 
 }
 /* ========================================================================    
  *
@@ -297,8 +326,7 @@ path {
     }
     /*Map styles*/
     #map { 
-        background: @inner_content_background_color;
-        background: #CBD7F2;
+        background: #F2DBB1 url(../img/map_bg.png);
         border:1px solid #bcbcbc;
         bottom: 0;
         left:0;
@@ -307,6 +335,8 @@ path {
         position: absolute;
         right:0;
         top: 4px;
+
+
     }
     #treemap_hidden {
         display: none;

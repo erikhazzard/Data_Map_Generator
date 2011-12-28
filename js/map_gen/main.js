@@ -14,9 +14,9 @@ MAP_GEN = {
 
     //define the _data object, which is contains all the continents, countries,
     //  and info about htem
-    //  NOTE: this is just a skeleton definition, the actual object will be 
-    //      recreated in the get_data() function
     _data: {
+        //  NOTE: this is just a skeleton definition, the actual object will be 
+        //      recreated in the get_data() function
         continent_name: {
             value: 1000,
             percentage: .4,
@@ -103,21 +103,52 @@ MAP_GEN = {
     config: {
         //  How big to scale the country and continents
         //  Smaller scale = smaller countries and continents
-        scaling_factor: .75,
+        scaling_factor: .58,
+
+
+        //Setup the range of pixels the d3 scale will use
+        country_area_scale_range: [15,70],
+
+        //This will store a d3 scale to be used in the 
+        //  convex_hull_randomize_points function
+        country_area_scale: undefined,
 
         //Convex hull generation config
-        convex_hull_randomize_points: function(){
-            return -15 + Math.random() * 30;
+        convex_hull_randomize_points: function(country_area){
+            var scale;
+            if(country_area !== undefined){
+                scale = MAP_GEN.config.country_area_scale(country_area);
+            }
+            else{
+                scale = 30;
+            }
+            return -(scale) + Math.random() * (scale*2);
         },
-        //  A distance factor of 1 will pretty much completely cover
-        //  the entire continent, but may be 'too much' and cause
-        //  overlaps for nearby continents
-        convex_hull_distance_factor: 1.3,
+
+        //Amount to round the country border edges by (in pixels)
+        country_border_round_amount: function(country_area){
+            var scale;
+            if(country_area !== undefined){
+                scale = MAP_GEN.config.country_area_scale(country_area);
+            }
+            else{
+                scale = 30;
+            }
+
+            //Use a base number, 5, so it will be moved by at least
+            //  5 pixels, then use a random number
+            return (scale / (parseInt(Math.random() * 4,10) + 1)) + (Math.random() * (scale));
+        },
 
         //-------------------------------
         //Jagged boreder config
         //-------------------------------
+        //Step amount determines how many pixels before a randomized
+        //  point will be added
         jagged_step_amount: 7,
+        //This factor affects how 'jagged' the points are
+        //  Values <= ~1 will not produce too much of an effect,
+        //  Values >= ~3 will be 'too' jagged
         jaggedness_factor: 2,
 
         //'Extra' randomness added to jaggedness
@@ -127,13 +158,14 @@ MAP_GEN = {
         //  This percent specifies how often this extra randomness
         //  will occurr.  Specify a whole number from 0 to 100 (0 is
         //  never, 100 is every time)
-        jagged_extra_random_percent_x: 20,
-        jagged_extra_random_percent_y: 20,
+        jagged_extra_random_percent_x: 22,
+        jagged_extra_random_percent_y: 22,
+
         //Amount to multiple extra randomness
         //  This is the scale that the extra jaggedness will be set to
         //  2 would be twice the amount of the jagged_step_facor
-        jagged_extra_random_scale_x: 3.5,
-        jagged_extra_random_scale_y: 3.5
+        jagged_extra_random_scale_x: 3.9,
+        jagged_extra_random_scale_y: 3.9
     }
 };
 
